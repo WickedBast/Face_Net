@@ -85,15 +85,35 @@ class Login(tk.Frame):
             email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
             password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
 
+        def backS():
+            email.delete(0, 'end')
+            email.insert(0, "Email")
+            password.delete(0, 'end')
+            password.insert(0, "Password")
+            controller.show_frame(StudentRegister)
+
+        def backT():
+            email.delete(0, 'end')
+            email.insert(0, "Email")
+            password.delete(0, 'end')
+            password.insert(0, "Password")
+            controller.show_frame(TeacherRegister)
+
         welcome = Label(self, text=" SIGN IN ", width=150, height=5)
         welcome.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
 
+        emailL = Label(self, text="E-mail:", width=10, height=2)
+        emailL.grid(row=5, column=0, columnspan=3, padx=10, pady=10)
+
         email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        email.grid(row=13, column=1, columnspan=3, padx=10, pady=10)
+        email.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
         email.insert(0, "Email")
 
-        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        password.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
+        passwordL = Label(self, text="Password:", width=10, height=2)
+        passwordL.grid(row=7, column=0, columnspan=3, padx=10, pady=10)
+
+        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show="*")
+        password.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
         password.insert(0, "Password")
 
         refresh()
@@ -105,10 +125,10 @@ class Login(tk.Frame):
         myButton = Button(self, text="Sign In!", command=login, fg="white", bg="orange")
         myButton.grid(row=17, column=1, columnspan=3, padx=10, pady=10)
 
-        buttonStudent = ttk.Button(self, text="Student Sign Up", command=lambda: controller.show_frame(StudentRegister))
+        buttonStudent = ttk.Button(self, text="Student Sign Up", command=backS)
         buttonStudent.grid(row=21, column=0, columnspan=3, padx=5, pady=5)
 
-        buttonTeacher = ttk.Button(self, text="Teacher Sign Up", command=lambda: controller.show_frame(TeacherRegister))
+        buttonTeacher = ttk.Button(self, text="Teacher Sign Up", command=backT)
         buttonTeacher.grid(row=21, column=2, columnspan=3, padx=5, pady=5)
 
 
@@ -227,7 +247,7 @@ class StudentRegister(tk.Frame):
             password.delete(0, 'end')
             password.insert(0, "Password")
             passwordA.delete(0, 'end')
-            passwordA.insert(0, "Password Again")
+            passwordA.insert(0, "Password")
             controller.show_frame(Login)
 
         welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=5)
@@ -249,13 +269,13 @@ class StudentRegister(tk.Frame):
         email.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
         email.insert(0, "Email")
 
-        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show='*')
         password.grid(row=11, column=1, columnspan=3, padx=10, pady=10)
         password.insert(0, "Password")
 
-        passwordA = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        passwordA = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show='*')
         passwordA.grid(row=13, column=1, columnspan=3, padx=10, pady=10)
-        passwordA.insert(0, "Password Again")
+        passwordA.insert(0, "Password")
 
         refresh()
 
@@ -326,7 +346,7 @@ class TeacherRegister(tk.Frame):
             password.delete(0, 'end')
             password.insert(0, "Password")
             passwordA.delete(0, 'end')
-            passwordA.insert(0, "Password Again")
+            passwordA.insert(0, "Password")
             controller.show_frame(Login)
 
         welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=5)
@@ -344,13 +364,13 @@ class TeacherRegister(tk.Frame):
         email.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
         email.insert(0, "Email")
 
-        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show="*")
         password.grid(row=11, column=1, columnspan=3, padx=10, pady=10)
         password.insert(0, "Password")
 
-        passwordA = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        passwordA = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show="*")
         passwordA.grid(row=13, column=1, columnspan=3, padx=10, pady=10)
-        passwordA.insert(0, "Password Again")
+        passwordA.insert(0, "Password")
 
         refresh()
 
