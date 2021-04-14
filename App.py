@@ -9,6 +9,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
+import webbrowser
 
 firebaseConfig = {
     "apiKey": "AIzaSyCGHyT8asvQwZUGZtpIbTYRozvLYaHBqPo",
@@ -46,7 +47,7 @@ class FaceNet(tk.Tk):
 
         self.frames = {}
 
-        for F in (Login, StudentRegister, TeacherRegister):
+        for F in (Login, StudentRegister, TeacherRegister, ForgotPassword):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -96,6 +97,10 @@ class Login(tk.Frame):
         password.insert(0, "Password")
 
         refresh()
+
+        forgotPassword = ttk.Button(self, text="Forgot your password?", cursor="hand2",
+                                    command=lambda: controller.show_frame(ForgotPassword))
+        forgotPassword.grid(row=23, column=1, columnspan=3, padx=10, pady=10)
 
         myButton = Button(self, text="Sign In!", command=login, fg="white", bg="orange")
         myButton.grid(row=17, column=1, columnspan=3, padx=10, pady=10)
@@ -210,6 +215,21 @@ class StudentRegister(tk.Frame):
             password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
             passwordA.bind("<FocusIn>", lambda args: passwordA.delete(0, 'end'))
 
+        def back():
+            name.delete(0, 'end')
+            name.insert(0, "Name")
+            surname.delete(0, 'end')
+            surname.insert(0, "Surname")
+            studentID.delete(0, 'end')
+            studentID.insert(0, "Student ID")
+            email.delete(0, 'end')
+            email.insert(0, "Email")
+            password.delete(0, 'end')
+            password.insert(0, "Password")
+            passwordA.delete(0, 'end')
+            passwordA.insert(0, "Password Again")
+            controller.show_frame(Login)
+
         welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=5)
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
@@ -242,7 +262,7 @@ class StudentRegister(tk.Frame):
         myButton = Button(self, text="Sign Up!", command=register, fg="white", bg="orange")
         myButton.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
 
-        buttonBack = ttk.Button(self, text="Back", command=lambda: controller.show_frame(Login))
+        buttonBack = ttk.Button(self, text="Back", command=back)
         buttonBack.grid(row=15, column=0, columnspan=3, padx=5, pady=5)
 
 
@@ -296,6 +316,19 @@ class TeacherRegister(tk.Frame):
             password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
             passwordA.bind("<FocusIn>", lambda args: passwordA.delete(0, 'end'))
 
+        def back():
+            name.delete(0, 'end')
+            name.insert(0, "Name")
+            surname.delete(0, 'end')
+            surname.insert(0, "Surname")
+            email.delete(0, 'end')
+            email.insert(0, "Email")
+            password.delete(0, 'end')
+            password.insert(0, "Password")
+            passwordA.delete(0, 'end')
+            passwordA.insert(0, "Password Again")
+            controller.show_frame(Login)
+
         welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=5)
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
@@ -324,8 +357,43 @@ class TeacherRegister(tk.Frame):
         myButton = Button(self, text="Sign Up!", command=register, fg="white", bg="orange")
         myButton.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
 
-        buttonBack = ttk.Button(self, text="Back", command=lambda: controller.show_frame(Login))
+        buttonBack = ttk.Button(self, text="Back", command=back)
         buttonBack.grid(row=15, column=0, columnspan=3, padx=5, pady=5)
+
+
+class ForgotPassword(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        def mail():
+            try:
+                auth1.send_password_reset_email(str(email.get()))
+                messagebox.showinfo("Email Send", "An email has been send to your email")
+            except:
+                messagebox.showerror("Unsuccessful Attempt", "Email not found")
+
+        def refresh():
+            email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
+
+        def back():
+            email.delete(0, 'end')
+            email.insert(0, "Enter your email")
+            controller.show_frame(Login)
+
+        welcome = Label(self, text=" FORGOT PASSWORD ", width=150, height=5)
+        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        email.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        email.insert(0, "Enter your email")
+
+        refresh()
+
+        buttonBack = ttk.Button(self, text="Back", command=back)
+        buttonBack.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+
+        myButton = Button(self, text="Submit", command=mail, fg="white", bg="orange")
+        myButton.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
 
 
 app = FaceNet()
