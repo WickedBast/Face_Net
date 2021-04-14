@@ -80,7 +80,11 @@ class Login(tk.Frame):
                 except:
                     messagebox.showerror("Information Credentials", "Your email or password is wrong")
 
-        welcome = Label(self, text=" SIGN IN ", width=150, height=18)
+        def refresh():
+            email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
+            password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
+
+        welcome = Label(self, text=" SIGN IN ", width=150, height=5)
         welcome.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
 
         email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
@@ -90,6 +94,8 @@ class Login(tk.Frame):
         password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
         password.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
         password.insert(0, "Password")
+
+        refresh()
 
         myButton = Button(self, text="Sign In!", command=login, fg="white", bg="orange")
         myButton.grid(row=17, column=1, columnspan=3, padx=10, pady=10)
@@ -103,7 +109,8 @@ class Login(tk.Frame):
 
 class StudentRegister(tk.Frame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self,parent)
+        tk.Frame.__init__(self, parent)
+
         def register():
             if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
                     password.get()).isspace() or str(passwordA.get()).isspace() or str(studentID.get()).isspace():
@@ -195,7 +202,15 @@ class StudentRegister(tk.Frame):
             cv2.destroyAllWindows()
             return list(encodelist[0])
 
-        welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=18)
+        def refresh():
+            name.bind("<FocusIn>", lambda args: name.delete(0, 'end'))
+            surname.bind("<FocusIn>", lambda args: surname.delete(0, 'end'))
+            studentID.bind("<FocusIn>", lambda args: studentID.delete(0, 'end'))
+            email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
+            password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
+            passwordA.bind("<FocusIn>", lambda args: passwordA.delete(0, 'end'))
+
+        welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=5)
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
         name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
@@ -222,13 +237,19 @@ class StudentRegister(tk.Frame):
         passwordA.grid(row=13, column=1, columnspan=3, padx=10, pady=10)
         passwordA.insert(0, "Password Again")
 
+        refresh()
+
         myButton = Button(self, text="Sign Up!", command=register, fg="white", bg="orange")
         myButton.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
+
+        buttonBack = ttk.Button(self, text="Back", command=lambda: controller.show_frame(Login))
+        buttonBack.grid(row=15, column=0, columnspan=3, padx=5, pady=5)
 
 
 class TeacherRegister(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
         def register():
             if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
                     password.get()).isspace() or str(passwordA.get()).isspace():
@@ -268,7 +289,14 @@ class TeacherRegister(tk.Frame):
             print(croppedEmail)
             db.child("teachers").child(croppedEmail).set(data1)
 
-        welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=18)
+        def refresh():
+            name.bind("<FocusIn>", lambda args: name.delete(0, 'end'))
+            surname.bind("<FocusIn>", lambda args: surname.delete(0, 'end'))
+            email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
+            password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
+            passwordA.bind("<FocusIn>", lambda args: passwordA.delete(0, 'end'))
+
+        welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=5)
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
         name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
@@ -291,8 +319,13 @@ class TeacherRegister(tk.Frame):
         passwordA.grid(row=13, column=1, columnspan=3, padx=10, pady=10)
         passwordA.insert(0, "Password Again")
 
+        refresh()
+
         myButton = Button(self, text="Sign Up!", command=register, fg="white", bg="orange")
         myButton.grid(row=15, column=1, columnspan=3, padx=10, pady=10)
+
+        buttonBack = ttk.Button(self, text="Back", command=lambda: controller.show_frame(Login))
+        buttonBack.grid(row=15, column=0, columnspan=3, padx=5, pady=5)
 
 
 app = FaceNet()
