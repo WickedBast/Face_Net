@@ -38,6 +38,10 @@ class FaceNet(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
+        self.shared_data = {
+            "email": tk.StringVar()
+        }
+
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
 
@@ -64,6 +68,7 @@ class FaceNet(tk.Tk):
 class Login(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
 
         def login():
             if str(email.get()).isspace() or str(password.get()).isspace():
@@ -78,7 +83,10 @@ class Login(tk.Frame):
 
                     if User:
                         auth1.sign_in_with_email_and_password(str(email.get()), str(password.get()))
+                        password.delete(0, 'end')
                         if str(email.get()).endswith("@isikun.edu.tr") or str(email.get()) == "korhan.koz@isik.edu.tr":
+                            global welcomeMessage
+                            welcomeMessage.set("Welcome " + self.controller.shared_data["email"].get())
                             controller.show_frame(TeacherMainPage)
                         else:
                             controller.show_frame(StudentMainPage)
@@ -111,7 +119,8 @@ class Login(tk.Frame):
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         emailL.grid(row=5, column=0, columnspan=3, padx=10, pady=20)
 
-        email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF",
+                      textvariable=self.controller.shared_data["email"])
         email.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
         email.insert(0, "Email")
 
@@ -142,6 +151,7 @@ class Login(tk.Frame):
 class StudentRegister(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
 
         def register():
             if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
@@ -296,6 +306,7 @@ class StudentRegister(tk.Frame):
 class TeacherRegister(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
 
         def register():
             if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
@@ -391,6 +402,7 @@ class TeacherRegister(tk.Frame):
 class ForgotPassword(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
 
         def mail():
             try:
@@ -426,6 +438,7 @@ class ForgotPassword(tk.Frame):
 class TeacherMainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        self.controller = controller
 
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
@@ -438,9 +451,11 @@ class TeacherMainPage(tk.Frame):
                               bg="#ca3e47", fg="#FFFFFF")
         logoutButton.pack(side=RIGHT)
 
-        welcomeMessage = "Welcome " + str(auth1.current_user)
+        global welcomeMessage
+        welcomeMessage = tk.StringVar()
 
-        nameLabel = Label(frameHeader, height=6, width=50, bg="#313131", text=welcomeMessage, fg="#FFFFFF")
+        nameLabel = Label(frameHeader, height=6, width=50, bg="#313131", textvariable=welcomeMessage, fg="#FFFFFF")
+        welcomeMessage.set("")
         nameLabel.pack(side=RIGHT)
 
         frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
@@ -472,7 +487,7 @@ class TeacherMainPage(tk.Frame):
 class StudentMainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-
+        self.controller = controller
         frame = Frame(self, height=100, width=300, bg="#313131", bd='5', relief=SUNKEN)
         frame.grid()
 
@@ -480,50 +495,91 @@ class StudentMainPage(tk.Frame):
 class CreateCourse(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
 
         def back():
             self.documentLabel.configure(text="File Name")
+            courseNameE.delete(0, 'end')
+            courseNameE.insert(0, "Course Name")
+            courseAbbE.delete(0, 'end')
+            courseAbbE.insert(0, "Course Abbreviation")
             controller.show_frame(TeacherMainPage)
+
+        def refresh():
+            courseNameE.bind("<FocusIn>", lambda args: courseNameE.delete(0, 'end'))
+            courseAbbE.bind("<FocusIn>", lambda args: courseAbbE.delete(0, 'end'))
+
+        def create():
+            courseQu = db.child("courses").shallow().get()
+            courseCodesArray = list(courseQu.val())
+            if str(courseNameE.get()).isspace() or str(courseAbbE.get()).isspace():
+                messagebox.showerror("Blank spaces", "Please fill the blank areas.")
+            elif len(str(courseNameE.get())) == 0 or len(str(courseAbbE.get())) == 0:
+                messagebox.showerror("Blank spaces", "Please fill the blank areas.")
+            elif len(str(courseAbbE.get())) != 8 or not str(courseAbbE.get())[:4].isalpha() or not str(
+                    courseAbbE.get())[4:].isdigit():
+                messagebox.showerror("Wrong Abbreviation", "Please, check course abbreviation.")
+            elif self.documentLabel.cget("text") == "File Name":
+                messagebox.showerror("Empty File", "Please, add a csv file")
+            elif str(courseAbbE.get()) in courseCodesArray:
+                messagebox.showerror("Course Exists", "Please, check your course.")
+            else:
+                self.createCourses(str(courseNameE.get()), str(courseAbbE.get()),
+                                   self.controller.shared_data["email"].get())
+                messagebox.showinfo("Course Added", "The course added.")
+                self.documentLabel.configure(text="File Name")
+                courseNameE.delete(0, 'end')
+                courseNameE.insert(0, "Course Name")
+                courseAbbE.delete(0, 'end')
+                courseAbbE.insert(0, "Course Abbreviation")
 
         welcome = Label(self, text=" ADD COURSE ", width=150, height=10, bg="#414141", fg="#FFFFFF")
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
+        courseNameE = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        courseNameE.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        courseNameE.insert(0, "Course Name")
+
+        courseAbbE = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        courseAbbE.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+        courseAbbE.insert(0, "Course Abbreviation")
+
+        refresh()
+
         backButton = Button(self, text="Back", command=back,
                             width=10, bg="#fed049")
-        backButton.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
+        backButton.grid(row=7, column=0, columnspan=3, padx=10, pady=10)
 
         browseButton = Button(self, text="Browse a File", command=self.fileDialog,
                               width=10, bg="#ca3e47", fg="#FFFFFF")
-        browseButton.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        browseButton.grid(row=7, column=1, columnspan=3, padx=10, pady=30)
 
         self.documentLabel = Label(self, text="File Name", width=30)
-        self.documentLabel.grid(row=3, column=2, columnspan=3, padx=10, pady=10)
+        self.documentLabel.grid(row=7, column=2, columnspan=3, padx=10, pady=10)
 
-        buttonSubmit = Button(self, text="Submit Classes", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonSubmit.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+        buttonSubmit = Button(self, text="Submit Classes", width=13, bg="#ca3e47", fg="#FFFFFF", command=create)
+        buttonSubmit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
 
     def fileDialog(self):
         self.filename = filedialog.askopenfilename(initialdir="/", title="Select A File", filetype=
         (("csv files", "*.csv"), ("all files", "*.*")))
-        self.documentLabel.configure(text=self.filename)
 
         if len(self.filename) == 0:
-            messagebox.showinfo("Empty File", "Please add a csv file.")
+            messagebox.showwarning("Empty File", "Please add a csv file.")
             self.documentLabel.configure(text="File Name")
 
         elif not str(self.filename).endswith(".csv"):
-            messagebox.showinfo("Wrong Type", "Check your file type.")
+            messagebox.showerror("Wrong Type", "Check your file type.")
             self.documentLabel.configure(text="File Name")
 
         else:
-            raw_data = pd.read_csv(f'{self.filename}')
-            asarray = np.asarray(raw_data["StudentID"])
+            self.documentLabel.configure(text=self.filename)
 
-    def createCourses(courseName, courseID, TeacherMail):
+    def createCourses(self, courseName, courseID, TeacherMail):
         courseQu = db.child("courses").shallow().get()
-        if (courseQu.val() == None):
-            raw_data = pd.read_csv(r'C:\Users\KORHAN.KOZ\Desktop\asddsa.csv')
-            print(raw_data.head(15))
+        if courseQu.val() is None and not str(self.documentLabel.cget("text")).endswith(".csv"):
+            raw_data = pd.read_csv(self.documentLabel.cget("text"))
+            # print(raw_data.head(15))
             asarray = np.asarray(raw_data["StudentID"])
 
             courseData = {"CourseName": courseName, "TeacherMail": TeacherMail}
@@ -533,11 +589,11 @@ class CreateCourse(tk.Frame):
                 db.child("coursesENROLL").child(courseID).child(student).set(enrollData)
         else:
             courseCodesArray = list(courseQu.val())
-            print(courseCodesArray)
+            # print(courseCodesArray)
 
             if courseID not in courseCodesArray:
-                raw_data = pd.read_csv(r'C:\Users\KORHAN.KOZ\Desktop\asddsa.csv')
-                print(raw_data.head(15))
+                raw_data = pd.read_csv(self.documentLabel.cget("text"))
+                # print(raw_data.head(15))
                 asarray = np.asarray(raw_data["StudentID"])
 
                 courseData = {"CourseName": courseName, "TeacherMail": TeacherMail}
@@ -546,12 +602,14 @@ class CreateCourse(tk.Frame):
                 for student in asarray:
                     db.child("coursesENROLL").child(courseID).child(student).set(enrollData)
             else:
-                print("Course exists")
+                messagebox.showerror("Course Exists", "Please, check your course.")
+                # print("Course exists")
 
 
-app = FaceNet()
-app.geometry("1050x600")
-app.title("FaceNet")
-# app.iconbitmap('images/faceprint.jgp') It must end with .ico
-# root.geometry("1100x700")
-app.mainloop()
+if __name__ == "__main__":
+    app = FaceNet()
+    app.geometry("1050x600")
+    app.title("FaceNet")
+    # app.iconbitmap('images/faceprint.jgp') It must end with .ico
+    # root.geometry("1100x700")
+    app.mainloop()
