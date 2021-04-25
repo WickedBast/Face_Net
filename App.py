@@ -52,7 +52,7 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse):
+                CreateCourse, DeleteCourse):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -468,7 +468,7 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonCC.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonDC = Button(frameButtons, text="Delete Course", command=lambda: controller.show_frame(CreateCourse),
+        buttonDC = Button(frameButtons, text="Delete Course", command=lambda: controller.show_frame(DeleteCourse),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDC.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
@@ -557,7 +557,7 @@ class CreateCourse(tk.Frame):
         self.documentLabel = Label(self, text="File Name", width=30)
         self.documentLabel.grid(row=7, column=2, columnspan=3, padx=10, pady=10)
 
-        buttonSubmit = Button(self, text="Submit Classes", width=13, bg="#ca3e47", fg="#FFFFFF", command=create)
+        buttonSubmit = Button(self, text="Submit Class", width=13, bg="#ca3e47", fg="#FFFFFF", command=create)
         buttonSubmit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
 
     def fileDialog(self):
@@ -604,6 +604,50 @@ class CreateCourse(tk.Frame):
             else:
                 messagebox.showerror("Course Exists", "Please, check your course.")
                 # print("Course exists")
+
+
+class DeleteCourse(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        def back():
+            controller.show_frame(TeacherMainPage)
+
+        def delete():
+            selected_course = self.courseAbbC.get()
+            deleteCourse(selected_course)
+
+        def deleteCourse(courseID):
+            courseQu = db.child("courses").shallow().get()
+            courseCodesArray = list(courseQu.val())
+            print(courseCodesArray)
+            db.child("courses").child(courseID).remove()
+            db.child("coursesENROLL").child(courseID).remove()
+            self.courseAbbC.set("")
+
+        welcome = Label(self, text=" DELETE COURSE ", width=150, height=10, bg="#414141", fg="#FFFFFF")
+        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        courses = []
+
+        self.courseAbbC = ttk.Combobox(self, values=courses, state='readonly', width=30, postcommand=self.addCourses)
+        self.courseAbbC.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+
+        backButton = Button(self, text="Back", command=back,
+                            width=10, bg="#fed049")
+        backButton.grid(row=7, column=0, columnspan=3, padx=10, pady=10)
+
+        buttonSubmit = Button(self, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF", command=delete)
+        buttonSubmit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+
+    def addCourses(self):
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(
+            self.controller.shared_data["email"].get()).get()
+        result1 = list(result.val())
+        print(result1)
+
+        self.courseAbbC['values'] = result1
 
 
 if __name__ == "__main__":
