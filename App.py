@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox, ttk, filedialog
+from tkcalendar import Calendar
+from datetime import date
+from datetime import datetime
 import pyrebase
 import cv2
 from pathlib import Path
@@ -39,7 +42,9 @@ class FaceNet(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.shared_data = {
-            "email": tk.StringVar()
+            "email": tk.StringVar(),
+            "selectedCourse": tk.StringVar(),
+            "selectedExam": tk.StringVar()
         }
 
         container = tk.Frame(self)
@@ -52,7 +57,7 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse, DeleteCourse):
+                CreateCourse, DeleteCourse, CreateExam, DeleteExam, DetailPage):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -63,6 +68,10 @@ class FaceNet(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+
+    def get_frame(self, page_name):
+        frame = self.frames[page_name]
+        return frame
 
 
 class Login(tk.Frame):
@@ -87,6 +96,13 @@ class Login(tk.Frame):
                         if str(email.get()).endswith("@isikun.edu.tr") or str(email.get()) == "korhan.koz@isik.edu.tr":
                             global welcomeMessage
                             welcomeMessage.set("Welcome " + self.controller.shared_data["email"].get())
+                            global coursesofTeacher
+                            obj2 = TeacherMainPage
+                            coursesofTeacher = obj2.getCourseCodesOfTeacher(self,
+                                                                            self.controller.shared_data["email"].get())
+                            # print(coursesofTeacher)
+                            # obj2.courses(self)
+                            controller.get_frame(TeacherMainPage).courses()
                             controller.show_frame(TeacherMainPage)
                         else:
                             controller.show_frame(StudentMainPage)
@@ -181,7 +197,7 @@ class StudentRegister(tk.Frame):
                 except:
                     messagebox.showerror("Email Already Exists", "This email is registered to the system.")
                     return
-                print(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), str(password.get()))
+                # print(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), str(password.get()))
                 encoding = takePhoto()
                 registerStudent(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), encoding,
                                 str(password.get()))
@@ -202,7 +218,7 @@ class StudentRegister(tk.Frame):
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 boxes = face_recognition.face_locations(img, model="hog")
                 encode = face_recognition.face_encodings(img, boxes, model="small")[0]
-                print(encode)
+                # print(encode)
                 encodeList.append(encode)
             return encodeList
 
@@ -212,31 +228,31 @@ class StudentRegister(tk.Frame):
             while True:
                 ret, frame = cam.read()
                 if not ret:
-                    print("failed to grab frame")
+                    # print("failed to grab frame")
                     break
                 cv2.imshow("test", frame)
 
                 k = cv2.waitKey(1)
                 if k % 256 == 27:
                     # ESC pressed
-                    print("Escape hit, closing...")
+                    # print("Escape hit, closing...")
                     break
                 elif k % 256 == 32:
                     # SPACE pressed
 
                     parent = Path(__file__).parent
-                    print(parent)
+                    # print(parent)
                     registerPic = Path(parent, 'Temp', 'TEST.png').__str__()
-                    print(registerPic)
+                    # print(registerPic)
                     cv2.imwrite(registerPic, frame)
                     myList = os.listdir('Temp')
-                    print(myList)
+                    # print(myList)
                     images = []
                     for cl in myList:
                         x = Path(parent, 'Temp')
                         curImg = cv2.imread(f'{x}/{cl}')
                         images.append(curImg)
-                    print(images)
+                    # print(images)
                     encodelist = findEncodings(images)
 
             cam.release()
@@ -333,7 +349,7 @@ class TeacherRegister(tk.Frame):
                 except:
                     messagebox.showerror("Email Already Exists", "This email is registered to the system.")
                     return
-                print(str(name.get()), str(surname.get()), str(email.get()), str(password.get()))
+                # print(str(name.get()), str(surname.get()), str(email.get()), str(password.get()))
                 registerTeacher(str(name.get()), str(surname.get()), str(email.get()), str(password.get()))
                 login = auth1.sign_in_with_email_and_password(str(email.get()), str(password.get()))
                 auth1.send_email_verification(login["idToken"])
@@ -344,7 +360,7 @@ class TeacherRegister(tk.Frame):
             data1 = {"name": name, "surname": surname, "email": email}
             croppedEmail = email[:-14]
             croppedEmail = croppedEmail.replace(".", "")
-            print(croppedEmail)
+            # print(croppedEmail)
             db.child("teachers").child(croppedEmail).set(data1)
 
         def refresh():
@@ -472,16 +488,140 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDC.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonCE = Button(frameButtons, text="Create Exam", command=lambda: controller.show_frame(CreateCourse),
+        buttonCE = Button(frameButtons, text="Create Exam", command=lambda: controller.show_frame(CreateExam),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonCE.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonDE = Button(frameButtons, text="Delete Exam", command=lambda: controller.show_frame(CreateCourse),
+        buttonDE = Button(frameButtons, text="Delete Exam", command=lambda: controller.show_frame(DeleteExam),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDE.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
 
-        frameCourses = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameCourses.pack(side=LEFT, fill=X)
+        buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonRefresh.grid(row=9, column=1, columnspan=3, padx=10, pady=40)
+
+        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameCE.pack(side=LEFT, fill=X)
+
+        self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameCourses.pack(side=TOP, fill=X)
+
+        global coursesofTeacher
+        coursesofTeacher = []
+        self.courses()
+
+        # canvas = Canvas(frameCourses)
+        # scroll = ttk.Scrollbar(frameCourses, orient=HORIZONTAL, command=canvas.xview)
+        # scroll.pack(side=BOTTOM, fill=X)
+        # canvas.configure(xscrollcommand=scroll.set)
+        # canvas.pack(side=LEFT)
+
+        self.frameExams = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameExams.pack(side=BOTTOM, fill=X)
+
+        self.exams()
+
+    def courses(self):
+        global coursesofTeacher
+        coursesofTeacher = self.getCourseCodesOfTeacher(self.controller.shared_data["email"].get())
+        courses = coursesofTeacher
+
+        # print(courses)
+
+        for widget in self.frameCourses.winfo_children():
+            widget.destroy()
+
+        for course in courses:
+            self.frameCourse = Frame(self.frameCourses, height=250, width=250, bg="#414141", borderwidth=2,
+                                     relief=SUNKEN)
+            self.frameCourse.pack(side=LEFT)
+
+            self.labelCourse = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[1], fg="#FFFFFF")
+            self.labelCourse.place(x=25, y=20)
+
+            self.labelCourseAbb = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[0],
+                                        fg="#FFFFFF")
+            self.labelCourseAbb.place(x=25, y=100)
+
+            self.buttonDetail = Button(self.frameCourse, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                                       command=lambda courseID=course[0]: self.openCourseDetail(courseID))
+            self.buttonDetail.place(x=75, y=185)
+
+    def exams(self):
+        exams = self.getExamsOfTeacher(self.controller.shared_data["email"].get())
+
+        for pos in range(len(exams)):
+            frameExam = Frame(self.frameExams, height=250, width=250, bg="#414141", borderwidth=2, relief=SUNKEN)
+            frameExam.pack(side=LEFT)
+
+            labelExam = Label(frameExam, height=3, width=28, bg="#313131", textvariable=exams[pos])
+            labelExam.place(x=25, y=20)
+
+            labelExamDetails = Label(frameExam, height=3, width=28, bg="#313131")
+            labelExamDetails.place(x=25, y=100)
+
+            buttonExam = Button(frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF")
+            buttonExam.place(x=75, y=185)
+
+    def getCourseCodesOfTeacher(self, teacherMail):
+        coursesArrays = []
+        courseQu = db.child("courses").shallow().get()
+        courseCodesArray = list(courseQu.val())
+        # print(courseCodesArray)
+
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(teacherMail).get()
+        result1 = list(result.val())
+        # print(result1)
+        for course in result:
+            stuListResult = db.child("coursesENROLL").child(course.key()).shallow().get()
+            stuList = list(stuListResult.val())
+            courseArray = []
+            courseArray.append(str(course.key()))
+            courseArray.append(course.val()["CourseName"])
+            courseArray.append(stuList)
+            coursesArrays.append(courseArray)
+
+        # print(coursesArrays)
+
+        return coursesArrays
+
+    def getExamsOfTeacher(self, teacherMail):
+        examsArrays = []
+        courseQu = db.child("courses").shallow().get()
+        courseCodesArray = list(courseQu.val())
+        # print(courseCodesArray)
+
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(teacherMail).get()
+        result1 = list(result.val())
+        # print(result1)
+        for course in result1:
+            examResult = db.child("exams").order_by_child("CourseID").equal_to(course).get()
+            if len(examResult.val()) != 0:
+                for exam in examResult:
+                    examArray = []
+                    examArray.append(exam.key())
+                    examArray.append(exam.val())
+                    # print(exam.val())
+                    # print(exam.key())
+                    examsArrays.append(examArray)
+                    # print(examsArrays[0][1]["AttemptNumbers"])
+
+        return examsArrays
+
+    def openCourseDetail(self, courseID):
+        self.controller.shared_data["selectedCourse"] = courseID
+        # print(self.controller.shared_data["selectedCourse"])
+
+        global courseAbb
+        courseAbb.set(self.controller.shared_data["selectedCourse"])
+
+        result123 = db.child("courses").child(self.controller.shared_data["selectedCourse"]).get()
+
+        global courseName
+        courseName.set(result123.val()["CourseName"])
+
+        self.controller.get_frame(DetailPage).getStudents()
+
+        self.controller.show_frame(DetailPage)
 
 
 class StudentMainPage(tk.Frame):
@@ -612,6 +752,7 @@ class DeleteCourse(tk.Frame):
         self.controller = controller
 
         def back():
+            self.courseAbbC.set("")
             controller.show_frame(TeacherMainPage)
 
         def delete():
@@ -621,13 +762,17 @@ class DeleteCourse(tk.Frame):
         def deleteCourse(courseID):
             courseQu = db.child("courses").shallow().get()
             courseCodesArray = list(courseQu.val())
-            print(courseCodesArray)
+            # print(courseCodesArray)
             db.child("courses").child(courseID).remove()
             db.child("coursesENROLL").child(courseID).remove()
             self.courseAbbC.set("")
+            controller.show_frame(TeacherMainPage)
 
         welcome = Label(self, text=" DELETE COURSE ", width=150, height=10, bg="#414141", fg="#FFFFFF")
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        courseL = Label(self, text="Select Course:", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        courseL.grid(row=5, column=0, columnspan=3, padx=10, pady=20)
 
         courses = []
 
@@ -645,14 +790,472 @@ class DeleteCourse(tk.Frame):
         result = db.child("courses").order_by_child("TeacherMail").equal_to(
             self.controller.shared_data["email"].get()).get()
         result1 = list(result.val())
-        print(result1)
+        # print(result1)
 
         self.courseAbbC['values'] = result1
+
+
+class CreateExam(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        def back():
+            refresh()
+            controller.show_frame(TeacherMainPage)
+
+        def refresh():
+            self.courseAbbC.set("")
+            examID.set("")
+
+            # hour_dur.delete(0, "end")
+            # hour_dur.insert(0, 0)
+            # min_dur.delete(0, "end")
+            # min_dur.insert(0, 0)
+
+            # min_sb.delete(0, "end")
+            # min_sb.insert(0, hour_string)
+            # sec_hour.delete(0, "end")
+            # sec_hour.insert(0, min_string)
+
+            # attemptNum.delete(0, "end")
+            # attemptNum.insert(0, 1)
+
+        def create_Exam():
+            createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
+                       str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()), str(examID.get()),
+                       str(startDate.get_date()))
+
+        def createExam(courseID, duration, startTime, attempt, examType, startDates):
+            dateN = startDates.split("/")
+            year = int("20" + dateN[2])
+            month = int(dateN[0])
+            day = int(dateN[1])
+
+            examQu = db.child("exams").shallow().get()
+            if len(self.courseAbbC.get()) == 0 or len(examID.get()) == 0:
+                messagebox.showwarning("Empty Place", "Fill every part")
+            elif str(hour_dur.get()) == "0" and (str(min_dur.get()) == "0" or str(min_dur.get()) == "00"):
+                messagebox.showwarning("Duration 0", "Set the duration")
+            elif str(min_sb.get()) == "0" and (str(sec_hour.get()) == "0" or str(sec_hour.get()) == "00"):
+                messagebox.showwarning("Time 0", "Set the Time")
+            else:
+                if year >= today.year:
+                    if month >= today.month:
+                        if day >= today.day:
+                            if 0 <= int(min_dur.get()) <= 59 and 0 <= int(sec_hour.get()) <= 59:
+                                if examQu.val() is None:
+                                    examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                                "AttemptNumbers": attempt, "ExamType": examType,
+                                                "StartDate": startDates}
+                                    db.child("exams").child(courseID + "-1").set(examData)
+                                    messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                else:
+                                    ExamCodesArray = list(examQu.val())
+                                    # print(ExamCodesArray)
+                                    result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+                                    numOfExam = "-" + str(len(result.val()) + 1)
+                                    examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                                "AttemptNumbers": attempt, "ExamType": examType,
+                                                "StartDate": startDates}
+                                    db.child("exams").child(courseID + numOfExam).set(examData)
+                                    messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                refresh()
+                                controller.show_frame(TeacherMainPage)
+                            else:
+                                messagebox.showerror("Time Error", "Check the minutes")
+                        else:
+                            messagebox.showwarning("Date Passed", "Select available date")
+                    else:
+                        messagebox.showwarning("Date Passed", "Select available date")
+                else:
+                    messagebox.showwarning("Date Passed", "Select available date")
+
+        mainFrame = Frame(self, height=600, width=1050, bg="#414141", padx=20, relief=SUNKEN)
+        mainFrame.pack(side=TOP)
+
+        welcome = Label(mainFrame, text=" CREATE EXAM ", width=150, height=10, bg="#414141", fg="#FFFFFF")
+        welcome.pack(side=TOP)
+
+        leftL = Frame(mainFrame, height=350, width=200, bg="#414141", relief=SUNKEN)
+        leftL.pack(side=LEFT)
+
+        firstL = Frame(leftL, height=100, width=100, bg="#414141")
+        firstL.pack(fill=BOTH)
+
+        courseL = Label(firstL, text="Select Course:", width=12, height=2, bg="#313131", fg="#FFFFFF")
+        courseL.pack(pady=10, side=LEFT, expand=True)
+
+        courses = []
+
+        self.courseAbbC = ttk.Combobox(firstL, values=courses, state='readonly', width=20, postcommand=self.getCourses)
+        self.courseAbbC.pack(pady=10, side=LEFT)
+
+        secondL = Frame(leftL, height=100, width=100, bg="#414141")
+        secondL.pack(fill=BOTH)
+
+        examL = Label(secondL, text="Select Exam Type:", width=15, height=2, bg="#313131", fg="#FFFFFF")
+        examL.pack(pady=10, side=LEFT, expand=True)
+
+        examID = ttk.Combobox(secondL, values=['First Midterm', 'Second Midterm', 'Third Midterm', 'Final'],
+                              state='readonly', width=20)
+        examID.pack(pady=10, side=LEFT)
+
+        rightL = Frame(mainFrame, height=450, width=200, bg="#414141", relief=SUNKEN)
+        rightL.pack(side=RIGHT)
+
+        firstR = Frame(rightL, height=300, width=300, bg="#414141")
+        firstR.pack(fill=BOTH)
+
+        dateL = Label(firstR, text="Select Exam Date:", width=15, height=2, bg="#313131", fg="#FFFFFF")
+        dateL.pack(pady=10, side=LEFT, expand=True)
+
+        today = date.today()
+        now = datetime.now()
+
+        startDate = Calendar(firstR, selectmode='day', year=today.year, month=today.month, day=today.day)
+        startDate.pack(side=LEFT)
+
+        hour_string = StringVar()
+        min_string = StringVar()
+        hour_d_string = StringVar()
+        min_d_string = StringVar()
+        f = ('Times', 20)
+
+        secondR = Frame(rightL, height=200, width=100, bg="#414141")
+        secondR.pack(fill=BOTH)
+
+        timeL = Label(secondR, text="Select Exam Time:", width=15, height=2, bg="#313131", fg="#FFFFFF")
+        timeL.pack(pady=10, side=LEFT, expand=True)
+
+        min_sb = Spinbox(secondR, from_=0, to=23, wrap=True, textvariable=hour_string, width=2, state="readonly",
+                         font=f,
+                         justify=CENTER)
+        sec_hour = Spinbox(secondR, from_=0, to=59, wrap=True, textvariable=min_string, font=f, width=2, justify=CENTER)
+        hour_string.set(int(now.hour))
+        min_string.set(int(now.minute))
+        min_sb.pack(side=LEFT, fill=X, expand=True)
+        sec_hour.pack(side=LEFT, fill=X, expand=True)
+
+        thirdL = Frame(leftL, height=200, width=100, bg="#414141")
+        thirdL.pack(fill=BOTH)
+
+        durL = Label(thirdL, text="Select Duration (Hour/Minute):", width=25, height=2, bg="#313131", fg="#FFFFFF")
+        durL.pack(pady=10, side=LEFT, expand=True)
+
+        hour_dur = Spinbox(thirdL, from_=0, to=9, wrap=True, textvariable=hour_d_string, width=2, state="readonly",
+                           font=f, justify=CENTER)
+        min_dur = Spinbox(thirdL, from_=0, to=59, wrap=True, textvariable=min_d_string, font=f, width=2, justify=CENTER)
+
+        hour_dur.pack(side=LEFT, fill=X, expand=True)
+        min_dur.pack(side=LEFT, fill=X, expand=True)
+
+        forthL = Frame(leftL, height=200, width=100, bg="#414141")
+        forthL.pack(fill=BOTH)
+
+        ateL = Label(forthL, text="Select Attempt Number:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        ateL.pack(pady=10, side=LEFT, expand=True)
+
+        attemptNum = Spinbox(forthL, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER)
+        attemptNum.pack(pady=10)
+
+        backButton = Button(self, text="Back", command=back,
+                            width=10, bg="#fed049")
+        backButton.pack(pady=10)
+
+        buttonSubmit = Button(self, text="Create", width=13, bg="#ca3e47", fg="#FFFFFF", command=create_Exam)
+        buttonSubmit.pack(pady=10)
+
+    def getCourses(self):
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(
+            self.controller.shared_data["email"].get()).get()
+        result1 = list(result.val())
+        # print(result1)
+
+        self.courseAbbC['values'] = result1
+
+
+class DeleteExam(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        def back():
+            self.courseAbbC.set("")
+            self.examAbbC.set("")
+            controller.show_frame(TeacherMainPage)
+
+        def delete():
+            selected_exam = self.examAbbC.get()
+            deleteExam(selected_exam)
+
+        def deleteExam(examID):
+
+            if not (str(self.examAbbC.get()).isspace() or len(str(self.examAbbC.get())) == 0 or str(
+                    self.examAbbC.get()) == ""):
+
+                result = db.child("exams").order_by_child("CourseID").equal_to(examID).get()
+                result1 = list(result.val())
+                # print(result1)
+
+                # Get current courses
+                examQu = db.child("exams").shallow().get()
+                examCodesArray = list(examQu.val())
+                # print(examCodesArray)
+
+                courseCode, examIndex = examID.split("-")
+                examIndex = int(examIndex)
+                # print(courseCode)
+                # print(examIndex)
+                result = db.child("exams").order_by_child("CourseID").equal_to(courseCode).get()
+                numOfExam = (len(result.val()))
+                # print(numOfExam)
+
+                if examIndex != numOfExam:
+                    messagebox.showerror("Wrong Execution", "Cannot delete the exam because of the exam sequence.")
+                else:
+                    db.child("exams").child(examID).remove()
+                    messagebox.showinfo("Exam Deleted", "Exam deleted")
+                    self.courseAbbC.set("")
+                    self.examAbbC.set("")
+                    controller.show_frame(TeacherMainPage)
+            else:
+                messagebox.showerror("Blank Spaces", "Select exam")
+
+        welcome = Label(self, text=" DELETE EXAM ", width=150, height=10, bg="#414141", fg="#FFFFFF")
+        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        courseL = Label(self, text="Select Course:", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        courseL.grid(row=5, column=0, columnspan=3, padx=10, pady=20)
+
+        courses = []
+        exams = []
+
+        self.courseAbbC = ttk.Combobox(self, values=courses, state='readonly', width=30, postcommand=self.addCourses)
+        self.courseAbbC.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+
+        examL = Label(self, text="Select Exam:", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        examL.grid(row=7, column=0, columnspan=3, padx=10, pady=20)
+
+        self.examAbbC = ttk.Combobox(self, values=exams, state='readonly', width=30, postcommand=self.addExams)
+        self.examAbbC.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+
+        backButton = Button(self, text="Back", command=back,
+                            width=10, bg="#fed049")
+        backButton.grid(row=9, column=0, columnspan=3, padx=10, pady=10)
+
+        buttonSubmit = Button(self, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF", command=delete)
+        buttonSubmit.grid(row=11, column=1, columnspan=3, padx=10, pady=10)
+
+    def addCourses(self):
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(
+            self.controller.shared_data["email"].get()).get()
+        result1 = list(result.val())
+        # print(result1)
+
+        self.courseAbbC['values'] = result1
+
+    def addExams(self):
+        examResult = db.child("exams").order_by_child("CourseID").equal_to(str(self.courseAbbC.get())).get()
+        examResultList = list(examResult.val())
+
+        self.examAbbC['values'] = examResultList
+
+
+class DetailPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        frameHeader.pack(side=TOP, fill=X)
+
+        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logoLabel = Label(frameHeader, image=logo)
+        # logoLabel.pack(side=LEFT)
+
+        def deleteStudent():
+            if messagebox.askyesno("Confirm Deletion?", "Are you sure you want to delete this student?"):
+                a = getrow()
+                deleteOneStu(self.controller.shared_data["selectedCourse"], a)
+                self.trv.delete(*self.trv.get_children())
+                self.controller.get_frame(DetailPage).getStudents()
+            else:
+                return True
+
+        def deleteOneStu(courseID, studentID):
+            result = db.child("coursesENROLL").child(courseID).shallow().get()
+
+            # studentList which can be chosen from.
+            studentlist = (list(result.val()))
+
+            db.child("coursesENROLL").child(courseID).child(studentID).remove()
+
+        def getrow():
+            # rowid = trv.identify_row(event.y)
+            item = self.trv.item(self.trv.focus())
+            t1.set(item['values'][0])
+            # t2.set(item['values'][1])
+            # t3.set(item['values'][2])
+            return t1.get()
+
+        def toggleCheck(event):
+            rowid = self.trv.identify_row(event.y)
+            tag = self.trv.item(rowid, "tags")[0]
+            tags = list(self.trv.item(rowid, "tags"))
+            tags.remove(tag)
+            self.trv.item(rowid, tags=tags)
+            if tag == "checked":
+                self.trv.item(rowid, tags="unchecked")
+            else:
+                self.trv.item(rowid, tags="checked")
+
+        def toggle2(event):
+            for k in self.trv.get_children():
+                self.trv.item(k, tags="unchecked")
+            toggleCheck(event)
+
+        def addOne():
+            result = db.child("coursesENROLL").child(self.controller.shared_data["selectedCourse"]).shallow().get()
+
+            studentlist = (list(result.val()))
+
+            if str(studentID.get()).isspace() or len(str(studentID.get())) == 0:
+                messagebox.showerror("Empty ID", "Please enter an student ID")
+            elif str(studentID.get()) in studentlist:
+                messagebox.showerror("Student Exists", "Student Exists")
+            elif len(str(studentID.get())) == 9 or len(str(studentID.get())) == 10:
+                addOneStu(self.controller.shared_data["selectedCourse"], studentID.get())
+                messagebox.showinfo("Student Added", "Student Added")
+                self.trv.delete(*self.trv.get_children())
+                self.controller.get_frame(DetailPage).getStudents()
+                studentID.delete(0, 'end')
+            else:
+                messagebox.showerror("Wrong ID", "Entered a wrong ID")
+
+        def addOneStu(courseID, stuID):
+            result = db.child("coursesENROLL").child(courseID).shallow().get()
+            # studentList which can be chosen from.
+            studentlist = (list(result.val()))
+
+            if stuID not in studentlist:
+                stuendata = {"takesCourse": True}
+                db.child("coursesENROLL").child(courseID).child(stuID).set(stuendata)
+
+            else:
+                print("student exists in the course")
+
+        def back():
+            controller.get_frame(TeacherMainPage).courses()
+            controller.show_frame(TeacherMainPage)
+            self.trv.delete(*self.trv.get_children())
+
+        t1 = StringVar()
+        t2 = StringVar()
+        t3 = StringVar()
+
+        global courseAbb
+        courseAbb = tk.StringVar()
+
+        global courseName
+        courseName = tk.StringVar()
+
+        self.courseAbbLabel = Label(frameHeader, height=8, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF")
+        self.courseAbbLabel.pack(side=LEFT)
+
+        courseNameLabel = Label(frameHeader, height=8, width=40, bg="#313131", textvariable=courseName, fg="#FFFFFF")
+        courseNameLabel.pack(side=LEFT)
+
+        backButton = Button(frameHeader, text="Back", command=back, width=10,
+                            bg="#fed049")
+        backButton.pack(side=RIGHT)
+
+        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter.pack(side=TOP, fill=X)
+
+        frameLeft = Frame(frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameLeft.pack(side=LEFT)
+
+        studentListL = Label(frameLeft, width=88, height=2, bg="#313131", text="Student List", fg="#FFFFFF")
+        studentListL.place(x=0, y=0)
+
+        im_checked = ImageTk.PhotoImage(Image.open("checked.png"))
+        im_unchecked = ImageTk.PhotoImage(Image.open("unchecked.png"))
+
+        self.trv = ttk.Treeview(frameLeft, columns=(1, 2, 3), height=10)
+        style = ttk.Style(self.trv)
+        style.configure('Treeview', rowheight=30)
+
+        self.trv.tag_configure('checked', image=im_checked)
+        self.trv.tag_configure('unchecked', image=im_unchecked)
+
+        self.trv.heading('#0', text="")
+        self.trv.column("#0", minwidth=0, width=50)
+        self.trv.heading('#1', text="Student ID")
+        self.trv.column("#1", minwidth=0, width=100)
+        self.trv.heading('#2', text="Name / Surname")
+        self.trv.column("#2", minwidth=0, width=220)
+        self.trv.heading('#3', text="Student Email")
+        self.trv.column("#3", minwidth=0, width=250)
+
+        # self.trv.bind('<Button 1>', toggle2)
+
+        global studentList
+        studentList = []
+        self.getStudents()
+
+        self.trv.place(x=0, y=50)
+
+        frameRight = Frame(frameCenter, height=470, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameRight.pack(side=LEFT, fill=X)
+
+        studentAddL = Label(frameRight, text="Add Student", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        studentAddL.place(x=170, y=30)
+
+        studentIDL = Label(frameRight, text="Student ID:", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        studentIDL.place(x=25, y=96)
+
+        studentID = Entry(frameRight, width=30, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        studentID.place(x=120, y=100)
+
+        buttonAddS = Button(frameRight, text="Add", width=13, bg="#ca3e47", fg="#FFFFFF", command=addOne)
+        buttonAddS.place(x=160, y=160)
+
+        studentAddL = Label(frameRight, text="Remove Selected Student", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        studentAddL.place(x=140, y=280)
+
+        buttonDelS = Button(frameRight, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF", command=deleteStudent)
+        buttonDelS.place(x=160, y=370)
+
+    def getStudents(self):
+        global studentList
+        studentList.clear()
+        studentList = self.getCourseDetails(self.controller.shared_data["selectedCourse"])
+        i = 0
+        # print(studentList)
+        for student in studentList:
+            self.trv.insert(parent='', index='end', iid=i, text="", values=(student))
+            i += 1
+
+    def getCourseDetails(self, courseID):
+        stuListResult = db.child("coursesENROLL").child(courseID).shallow().get()
+        if stuListResult.val() is None:
+            return []
+        else:
+            stuList = list(stuListResult.val())
+            # print(stuList)
+
+            for student in stuList:
+                stuDetRes = db.child("students").child(student).get()
+                # print(stuDetRes.val())
+
+            return stuList
 
 
 if __name__ == "__main__":
     app = FaceNet()
     app.geometry("1050x600")
+    app.resizable(False, False)
     app.title("FaceNet")
     # app.iconbitmap('images/faceprint.jgp') It must end with .ico
     # root.geometry("1100x700")
