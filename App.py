@@ -14,6 +14,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 import pandas as pd
 import numpy as np
+import threading
 import webbrowser
 from PIL import ImageTk, Image
 
@@ -57,7 +58,7 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse, DeleteCourse, CreateExam, DeleteExam, DetailPage):
+                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -96,6 +97,8 @@ class Login(tk.Frame):
                         if str(email.get()).endswith("@isikun.edu.tr") or str(email.get()) == "korhan.koz@isik.edu.tr":
                             global welcomeMessage
                             welcomeMessage.set("Welcome " + self.controller.shared_data["email"].get())
+                            global welcomeMessageStudent
+                            welcomeMessageStudent.set("Welcome " + self.controller.shared_data["email"].get())
                             global coursesofTeacher
                             obj2 = TeacherMainPage
                             coursesofTeacher = obj2.getCourseCodesOfTeacher(self,
@@ -103,6 +106,7 @@ class Login(tk.Frame):
                             # print(coursesofTeacher)
                             # obj2.courses(self)
                             controller.get_frame(TeacherMainPage).courses()
+                            controller.get_frame(TeacherMainPage).exams()
                             controller.show_frame(TeacherMainPage)
                         else:
                             controller.show_frame(StudentMainPage)
@@ -496,8 +500,9 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDE.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonRefresh.grid(row=9, column=1, columnspan=3, padx=10, pady=40)
+        # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
+        # fg="#FFFFFF")
+        # buttonRefresh.grid(row=9, column=1, columnspan=3, padx=10, pady=40)
 
         frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameCE.pack(side=LEFT, fill=X)
@@ -505,8 +510,12 @@ class TeacherMainPage(tk.Frame):
         self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameCourses.pack(side=TOP, fill=X)
 
+        # courseList = Label(self.frameCourses, height=10, bg="#313131", text="Courses", fg="#FFFFFF")
+        # courseList.pack(side=TOP, fill=X)
+
         global coursesofTeacher
         coursesofTeacher = []
+
         self.courses()
 
         # canvas = Canvas(frameCourses)
@@ -515,8 +524,14 @@ class TeacherMainPage(tk.Frame):
         # canvas.configure(xscrollcommand=scroll.set)
         # canvas.pack(side=LEFT)
 
+        global examsofTeacher
+        examsofTeacher = []
+
         self.frameExams = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameExams.pack(side=BOTTOM, fill=X)
+
+        # examList = Label(self.frameExams, height=10, bg="#313131", text="Courses", fg="#FFFFFF")
+        # examList.pack(side=TOP, fill=X)
 
         self.exams()
 
@@ -544,23 +559,34 @@ class TeacherMainPage(tk.Frame):
 
             self.buttonDetail = Button(self.frameCourse, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
                                        command=lambda courseID=course[0]: self.openCourseDetail(courseID))
+            # threading.Thread(target= , args =[]).start()
             self.buttonDetail.place(x=75, y=185)
 
     def exams(self):
-        exams = self.getExamsOfTeacher(self.controller.shared_data["email"].get())
+        global examsofTeacher
+        examsofTeacher = self.getExamsOfTeacher(self.controller.shared_data["email"].get())
+        exams = examsofTeacher
 
-        for pos in range(len(exams)):
-            frameExam = Frame(self.frameExams, height=250, width=250, bg="#414141", borderwidth=2, relief=SUNKEN)
-            frameExam.pack(side=LEFT)
+        for widget in self.frameExams.winfo_children():
+            widget.destroy()
 
-            labelExam = Label(frameExam, height=3, width=28, bg="#313131", textvariable=exams[pos])
-            labelExam.place(x=25, y=20)
+        for exam in exams:
+            self.frameExam = Frame(self.frameExams, height=250, width=250, bg="#414141", borderwidth=2, relief=SUNKEN)
+            self.frameExam.pack(side=LEFT)
 
-            labelExamDetails = Label(frameExam, height=3, width=28, bg="#313131")
-            labelExamDetails.place(x=25, y=100)
+            self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
+            self.labelExamName.place(x=25, y=20)
 
-            buttonExam = Button(frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF")
-            buttonExam.place(x=75, y=185)
+            self.labelExamType = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[4], fg="#FFFFFF")
+            self.labelExamType.place(x=25, y=70)
+
+            self.labelExamDate = Label(self.frameExam, height=2, width=28, bg="#313131",
+                                       text=str(exam[5] + " " + exam[6]), fg="#FFFFFF")
+            self.labelExamDate.place(x=25, y=120)
+
+            self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                                     command=lambda examID=exam[0]: self.openExamDetail(examID))
+            self.buttonExam.place(x=75, y=190)
 
     def getCourseCodesOfTeacher(self, teacherMail):
         coursesArrays = []
@@ -586,9 +612,6 @@ class TeacherMainPage(tk.Frame):
 
     def getExamsOfTeacher(self, teacherMail):
         examsArrays = []
-        courseQu = db.child("courses").shallow().get()
-        courseCodesArray = list(courseQu.val())
-        # print(courseCodesArray)
 
         result = db.child("courses").order_by_child("TeacherMail").equal_to(teacherMail).get()
         result1 = list(result.val())
@@ -599,12 +622,17 @@ class TeacherMainPage(tk.Frame):
                 for exam in examResult:
                     examArray = []
                     examArray.append(exam.key())
-                    examArray.append(exam.val())
+                    examArray.append(exam.val()["AttemptNumbers"])
+                    examArray.append(exam.val()["CourseID"])
+                    examArray.append(exam.val()["Duration"])
+                    examArray.append(exam.val()["ExamType"])
+                    examArray.append(exam.val()["StartDate"])
+                    examArray.append(exam.val()["StartTime"])
                     # print(exam.val())
                     # print(exam.key())
                     examsArrays.append(examArray)
-                    # print(examsArrays[0][1]["AttemptNumbers"])
 
+        # print(examsArrays)
         return examsArrays
 
     def openCourseDetail(self, courseID):
@@ -619,17 +647,111 @@ class TeacherMainPage(tk.Frame):
         global courseName
         courseName.set(result123.val()["CourseName"])
 
-        self.controller.get_frame(DetailPage).getStudents()
+        self.controller.get_frame(CourseDetailPage).getStudents()
 
-        self.controller.show_frame(DetailPage)
+        self.controller.show_frame(CourseDetailPage)
+
+    def openExamDetail(self, examID):
+        self.controller.shared_data["selectedExam"] = examID
+
+        global examAbb
+        examAbb.set(self.controller.shared_data["selectedExam"])
+
+        result123 = db.child("exams").child(self.controller.shared_data["selectedExam"]).get()
+
+        global examType
+        examType.set(result123.val()["ExamType"])
+
+        self.controller.get_frame(ExamDetailPage).examCon()
+
+        self.controller.show_frame(ExamDetailPage)
 
 
 class StudentMainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        frame = Frame(self, height=100, width=300, bg="#313131", bd='5', relief=SUNKEN)
-        frame.grid()
+
+        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        frameHeader.pack(side=TOP, fill=X)
+
+        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logoLabel = Label(frameHeader, image=logo)
+        # logoLabel.pack(side=LEFT)
+
+        logoutButton = Button(frameHeader, text="Logout", command=lambda: controller.show_frame(Login), width=10,
+                              bg="#ca3e47", fg="#FFFFFF")
+        logoutButton.pack(side=RIGHT)
+
+        global welcomeMessageStudent
+        welcomeMessageStudent = tk.StringVar()
+
+        nameLabel = Label(frameHeader, height=6, width=50, bg="#313131", textvariable=welcomeMessageStudent, fg="#FFFFFF")
+        welcomeMessageStudent.set("")
+        nameLabel.pack(side=RIGHT)
+
+        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter.pack(side=TOP, fill=X)
+
+        frameButtons = Frame(frameCenter, height=700, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameButtons.pack(side=LEFT)
+
+        buttonCC = Button(frameButtons, text="Create Course", command=lambda: controller.show_frame(CreateCourse),
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonCC.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
+
+        buttonDC = Button(frameButtons, text="Delete Course", command=lambda: controller.show_frame(DeleteCourse),
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonDC.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
+
+        buttonCE = Button(frameButtons, text="Create Exam", command=lambda: controller.show_frame(CreateExam),
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonCE.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
+
+        buttonDE = Button(frameButtons, text="Delete Exam", command=lambda: controller.show_frame(DeleteExam),
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonDE.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
+
+        # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
+        # fg="#FFFFFF")
+        # buttonRefresh.grid(row=9, column=1, columnspan=3, padx=10, pady=40)
+
+        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameCE.pack(side=LEFT, fill=X)
+
+        self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameCourses.pack(side=TOP, fill=X)
+
+        # courseList = Label(self.frameCourses, height=10, bg="#313131", text="Courses", fg="#FFFFFF")
+        # courseList.pack(side=TOP, fill=X)
+
+        global coursesofStudent
+        coursesofStudent = []
+
+        self.coursesS()
+
+        # canvas = Canvas(frameCourses)
+        # scroll = ttk.Scrollbar(frameCourses, orient=HORIZONTAL, command=canvas.xview)
+        # scroll.pack(side=BOTTOM, fill=X)
+        # canvas.configure(xscrollcommand=scroll.set)
+        # canvas.pack(side=LEFT)
+
+        global examsofStudent
+        examsofStudent = []
+
+        self.frameExams = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameExams.pack(side=BOTTOM, fill=X)
+
+        # examList = Label(self.frameExams, height=10, bg="#313131", text="Courses", fg="#FFFFFF")
+        # examList.pack(side=TOP, fill=X)
+
+        self.examsS()
+
+    def coursesS(self):
+        print("courses")
+
+    def examsS(self):
+        print("exams")
 
 
 class CreateCourse(tk.Frame):
@@ -643,6 +765,7 @@ class CreateCourse(tk.Frame):
             courseNameE.insert(0, "Course Name")
             courseAbbE.delete(0, 'end')
             courseAbbE.insert(0, "Course Abbreviation")
+            controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
 
         def refresh():
@@ -753,6 +876,7 @@ class DeleteCourse(tk.Frame):
 
         def back():
             self.courseAbbC.set("")
+            controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
 
         def delete():
@@ -766,6 +890,7 @@ class DeleteCourse(tk.Frame):
             db.child("courses").child(courseID).remove()
             db.child("coursesENROLL").child(courseID).remove()
             self.courseAbbC.set("")
+            controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
 
         welcome = Label(self, text=" DELETE COURSE ", width=150, height=10, bg="#414141", fg="#FFFFFF")
@@ -802,6 +927,7 @@ class CreateExam(tk.Frame):
 
         def back():
             refresh()
+            controller.get_frame(TeacherMainPage).exams()
             controller.show_frame(TeacherMainPage)
 
         def refresh():
@@ -822,15 +948,98 @@ class CreateExam(tk.Frame):
             # attemptNum.insert(0, 1)
 
         def create_Exam():
-            createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
-                       str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()), str(examID.get()),
-                       str(startDate.get_date()))
+            if len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()),
+                           str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
+                           str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()),
+                           str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 1:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
+                           str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
+                           str("0" + min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
+            elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
+                    str(sec_hour.get())) == 2:
+                createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
+                           str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
+                           str(examID.get()), str(startDate.get_date()))
 
         def createExam(courseID, duration, startTime, attempt, examType, startDates):
             dateN = startDates.split("/")
             year = int("20" + dateN[2])
             month = int(dateN[0])
             day = int(dateN[1])
+
+            todayE = date.today()
+            nowE = datetime.now()
 
             examQu = db.child("exams").shallow().get()
             if len(self.courseAbbC.get()) == 0 or len(examID.get()) == 0:
@@ -840,10 +1049,52 @@ class CreateExam(tk.Frame):
             elif str(min_sb.get()) == "0" and (str(sec_hour.get()) == "0" or str(sec_hour.get()) == "00"):
                 messagebox.showwarning("Time 0", "Set the Time")
             else:
-                if year >= today.year:
-                    if month >= today.month:
-                        if day >= today.day:
-                            if 0 <= int(min_dur.get()) <= 59 and 0 <= int(sec_hour.get()) <= 59:
+                print(int(sec_hour.get()))
+                print(nowE.minute)
+                if 0 <= int(min_dur.get()) <= 59 and 0 <= int(sec_hour.get()) <= 59:
+                    if year > todayE.year:
+                        if examQu.val() is None:
+                            examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                        "AttemptNumbers": attempt, "ExamType": examType,
+                                        "StartDate": startDates}
+                            db.child("exams").child(courseID + "-1").set(examData)
+                            messagebox.showinfo("Exam Added", "Created Exam has been added")
+                        else:
+                            ExamCodesArray = list(examQu.val())
+                            # print(ExamCodesArray)
+                            result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+                            numOfExam = "-" + str(len(result.val()) + 1)
+                            examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                        "AttemptNumbers": attempt, "ExamType": examType,
+                                        "StartDate": startDates}
+                            db.child("exams").child(courseID + numOfExam).set(examData)
+                            messagebox.showinfo("Exam Added", "Created Exam has been added")
+                        refresh()
+                        controller.get_frame(TeacherMainPage).exams()
+                        controller.show_frame(TeacherMainPage)
+                    elif year == todayE.year:
+                        if day > todayE.month:
+                            if examQu.val() is None:
+                                examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                            "AttemptNumbers": attempt, "ExamType": examType,
+                                            "StartDate": startDates}
+                                db.child("exams").child(courseID + "-1").set(examData)
+                                messagebox.showinfo("Exam Added", "Created Exam has been added")
+                            else:
+                                ExamCodesArray = list(examQu.val())
+                                # print(ExamCodesArray)
+                                result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+                                numOfExam = "-" + str(len(result.val()) + 1)
+                                examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                            "AttemptNumbers": attempt, "ExamType": examType,
+                                            "StartDate": startDates}
+                                db.child("exams").child(courseID + numOfExam).set(examData)
+                                messagebox.showinfo("Exam Added", "Created Exam has been added")
+                            refresh()
+                            controller.get_frame(TeacherMainPage).exams()
+                            controller.show_frame(TeacherMainPage)
+                        elif day == todayE.month:
+                            if month > todayE.day:
                                 if examQu.val() is None:
                                     examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                                 "AttemptNumbers": attempt, "ExamType": examType,
@@ -861,15 +1112,65 @@ class CreateExam(tk.Frame):
                                     db.child("exams").child(courseID + numOfExam).set(examData)
                                     messagebox.showinfo("Exam Added", "Created Exam has been added")
                                 refresh()
+                                controller.get_frame(TeacherMainPage).exams()
                                 controller.show_frame(TeacherMainPage)
+                            elif month == todayE.day:
+                                if int(min_sb.get()) > nowE.hour:
+                                    if examQu.val() is None:
+                                        examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                                    "AttemptNumbers": attempt, "ExamType": examType,
+                                                    "StartDate": startDates}
+                                        db.child("exams").child(courseID + "-1").set(examData)
+                                        messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                    else:
+                                        ExamCodesArray = list(examQu.val())
+                                        # print(ExamCodesArray)
+                                        result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+                                        numOfExam = "-" + str(len(result.val()) + 1)
+                                        examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
+                                                    "AttemptNumbers": attempt, "ExamType": examType,
+                                                    "StartDate": startDates}
+                                        db.child("exams").child(courseID + numOfExam).set(examData)
+                                        messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                    refresh()
+                                    controller.get_frame(TeacherMainPage).exams()
+                                    controller.show_frame(TeacherMainPage)
+                                elif int(min_sb.get()) == nowE.hour:
+                                    if int(sec_hour.get()) > nowE.minute:
+                                        if examQu.val() is None:
+                                            examData = {"CourseID": courseID, "Duration": duration,
+                                                        "StartTime": startTime,
+                                                        "AttemptNumbers": attempt, "ExamType": examType,
+                                                        "StartDate": startDates}
+                                            db.child("exams").child(courseID + "-1").set(examData)
+                                            messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                        else:
+                                            ExamCodesArray = list(examQu.val())
+                                            # print(ExamCodesArray)
+                                            result = db.child("exams").order_by_child("CourseID").equal_to(
+                                                courseID).get()
+                                            numOfExam = "-" + str(len(result.val()) + 1)
+                                            examData = {"CourseID": courseID, "Duration": duration,
+                                                        "StartTime": startTime,
+                                                        "AttemptNumbers": attempt, "ExamType": examType,
+                                                        "StartDate": startDates}
+                                            db.child("exams").child(courseID + numOfExam).set(examData)
+                                            messagebox.showinfo("Exam Added", "Created Exam has been added")
+                                        refresh()
+                                        controller.get_frame(TeacherMainPage).exams()
+                                        controller.show_frame(TeacherMainPage)
+                                    else:
+                                        messagebox.showerror("Time Passed", "Minutes passed")
+                                else:
+                                    messagebox.showerror("Time Passed", "Hour passed")
                             else:
-                                messagebox.showerror("Time Error", "Check the minutes")
+                                messagebox.showwarning("Date Passed", "Select available date")
                         else:
                             messagebox.showwarning("Date Passed", "Select available date")
                     else:
                         messagebox.showwarning("Date Passed", "Select available date")
                 else:
-                    messagebox.showwarning("Date Passed", "Select available date")
+                    messagebox.showerror("Time Error", "Check the minutes")
 
         mainFrame = Frame(self, height=600, width=1050, bg="#414141", padx=20, relief=SUNKEN)
         mainFrame.pack(side=TOP)
@@ -913,7 +1214,8 @@ class CreateExam(tk.Frame):
         today = date.today()
         now = datetime.now()
 
-        startDate = Calendar(firstR, selectmode='day', year=today.year, month=today.month, day=today.day)
+        startDate = Calendar(firstR, selectmode='day', year=today.year, month=today.month, day=today.day,
+                             date_pattern='dd/mm/yy')
         startDate.pack(side=LEFT)
 
         hour_string = StringVar()
@@ -928,9 +1230,8 @@ class CreateExam(tk.Frame):
         timeL = Label(secondR, text="Select Exam Time:", width=15, height=2, bg="#313131", fg="#FFFFFF")
         timeL.pack(pady=10, side=LEFT, expand=True)
 
-        min_sb = Spinbox(secondR, from_=0, to=23, wrap=True, textvariable=hour_string, width=2, state="readonly",
-                         font=f,
-                         justify=CENTER)
+        min_sb = Spinbox(secondR, from_=8, to=23, wrap=True, textvariable=hour_string, width=2, state="readonly",
+                         font=f, justify=CENTER)
         sec_hour = Spinbox(secondR, from_=0, to=59, wrap=True, textvariable=min_string, font=f, width=2, justify=CENTER)
         hour_string.set(int(now.hour))
         min_string.set(int(now.minute))
@@ -983,6 +1284,7 @@ class DeleteExam(tk.Frame):
         def back():
             self.courseAbbC.set("")
             self.examAbbC.set("")
+            controller.get_frame(TeacherMainPage).exams()
             controller.show_frame(TeacherMainPage)
 
         def delete():
@@ -1018,6 +1320,7 @@ class DeleteExam(tk.Frame):
                     messagebox.showinfo("Exam Deleted", "Exam deleted")
                     self.courseAbbC.set("")
                     self.examAbbC.set("")
+                    controller.get_frame(TeacherMainPage).exams()
                     controller.show_frame(TeacherMainPage)
             else:
                 messagebox.showerror("Blank Spaces", "Select exam")
@@ -1062,7 +1365,7 @@ class DeleteExam(tk.Frame):
         self.examAbbC['values'] = examResultList
 
 
-class DetailPage(tk.Frame):
+class CourseDetailPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
@@ -1076,10 +1379,14 @@ class DetailPage(tk.Frame):
 
         def deleteStudent():
             if messagebox.askyesno("Confirm Deletion?", "Are you sure you want to delete this student?"):
-                a = getrow()
-                deleteOneStu(self.controller.shared_data["selectedCourse"], a)
-                self.trv.delete(*self.trv.get_children())
-                self.controller.get_frame(DetailPage).getStudents()
+                try:
+                    a = getrow()
+                    deleteOneStu(self.controller.shared_data["selectedCourse"], a)
+                    self.trv.delete(*self.trv.get_children())
+                    self.controller.get_frame(CourseDetailPage).getStudents()
+                    messagebox.showinfo("Student Deleted", "Student Deleted")
+                except:
+                    messagebox.showerror("Empty Student", "Student not Selected")
             else:
                 return True
 
@@ -1128,7 +1435,7 @@ class DetailPage(tk.Frame):
                 addOneStu(self.controller.shared_data["selectedCourse"], studentID.get())
                 messagebox.showinfo("Student Added", "Student Added")
                 self.trv.delete(*self.trv.get_children())
-                self.controller.get_frame(DetailPage).getStudents()
+                self.controller.get_frame(CourseDetailPage).getStudents()
                 studentID.delete(0, 'end')
             else:
                 messagebox.showerror("Wrong ID", "Entered a wrong ID")
@@ -1147,6 +1454,7 @@ class DetailPage(tk.Frame):
 
         def back():
             controller.get_frame(TeacherMainPage).courses()
+            controller.get_frame(TeacherMainPage).exams()
             controller.show_frame(TeacherMainPage)
             self.trv.delete(*self.trv.get_children())
 
@@ -1176,8 +1484,9 @@ class DetailPage(tk.Frame):
         frameLeft = Frame(frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameLeft.pack(side=LEFT)
 
-        studentListL = Label(frameLeft, width=88, height=2, bg="#313131", text="Student List", fg="#FFFFFF")
-        studentListL.place(x=0, y=0)
+        studentListL = Label(frameLeft, width=90, height=2, bg="#313131", text="Student List", fg="#FFFFFF")
+        # studentListL.place(x=0, y=0)
+        studentListL.pack(side=TOP)
 
         im_checked = ImageTk.PhotoImage(Image.open("checked.png"))
         im_unchecked = ImageTk.PhotoImage(Image.open("unchecked.png"))
@@ -1200,11 +1509,26 @@ class DetailPage(tk.Frame):
 
         # self.trv.bind('<Button 1>', toggle2)
 
-        global studentList
-        studentList = []
+        yscrollbar = ttk.Scrollbar(frameLeft, orient="vertical", command=self.trv.yview)
+
+        global studentIDList
+        studentIDList = []
+
+        global studentNameList
+        studentNameList = []
+
+        global studentEmailList
+        studentEmailList = []
+
         self.getStudents()
 
-        self.trv.place(x=0, y=50)
+        # self.trv.place(x=0, y=50)
+        self.trv.pack(side=LEFT)
+
+        # yscrollbar.place(x=605, y=75)
+        yscrollbar.pack(side="right", fill="y")
+
+        self.trv.configure(yscrollcommand=yscrollbar.set)
 
         frameRight = Frame(frameCenter, height=470, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameRight.pack(side=LEFT, fill=X)
@@ -1228,28 +1552,437 @@ class DetailPage(tk.Frame):
         buttonDelS.place(x=160, y=370)
 
     def getStudents(self):
-        global studentList
-        studentList.clear()
-        studentList = self.getCourseDetails(self.controller.shared_data["selectedCourse"])
+        global studentIDList
+        studentIDList.clear()
+        global studentNameList
+        studentNameList.clear()
+        global studentEmailList
+        studentEmailList.clear()
+
+        studentIDList = self.getCourseDetails(self.controller.shared_data["selectedCourse"])[0]
+        studentNameList = self.getCourseDetails(self.controller.shared_data["selectedCourse"])[1]
+        studentEmailList = self.getCourseDetails(self.controller.shared_data["selectedCourse"])[2]
         i = 0
         # print(studentList)
-        for student in studentList:
-            self.trv.insert(parent='', index='end', iid=i, text="", values=(student))
+        for studentID, studentName, studentEmail in zip(studentIDList, studentNameList, studentEmailList):
+            self.trv.insert(parent='', index='end', iid=i, text="", values=(studentID, studentName, studentEmail))
             i += 1
 
     def getCourseDetails(self, courseID):
         stuListResult = db.child("coursesENROLL").child(courseID).shallow().get()
+
         if stuListResult.val() is None:
-            return []
+            return [[], [], []]
         else:
             stuList = list(stuListResult.val())
             # print(stuList)
-
+            resultlist = []
+            idlist = []
+            namelist = []
+            maillist = []
             for student in stuList:
                 stuDetRes = db.child("students").child(student).get()
                 # print(stuDetRes.val())
+                if (stuDetRes.val() == None):
+                    idlist.append(student)
+                    namelist.append("-")
+                    maillist.append("-")
+                else:
+                    idlist.append(stuDetRes.val()['id'])
+                    namelist.append(str(stuDetRes.val()['name'] + " " + stuDetRes.val()['surname']))
+                    maillist.append(stuDetRes.val()['email'])
 
-            return stuList
+            resultlist.append(idlist)
+            resultlist.append(namelist)
+            resultlist.append(maillist)
+            # print(resultlist)
+            return resultlist
+
+
+class ExamDetailPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        frameHeader.pack(side=TOP, fill=X)
+
+        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logoLabel = Label(frameHeader, image=logo)
+        # logoLabel.pack(side=LEFT)
+
+        def back():
+            controller.get_frame(TeacherMainPage).exams()
+            controller.show_frame(TeacherMainPage)
+
+        global examAbb
+        examAbb = tk.StringVar()
+
+        global examType
+        examType = tk.StringVar()
+
+        global examDate
+        examDate = tk.StringVar()
+
+        global examTime
+        examTime = tk.StringVar()
+
+        global examDuration
+        examDuration = tk.StringVar()
+
+        global examAttempt
+        examAttempt = tk.StringVar()
+
+        self.examAbbLabel = Label(frameHeader, height=8, width=20, bg="#313131", textvariable=examAbb, fg="#FFFFFF")
+        self.examAbbLabel.pack(side=LEFT)
+
+        examTypeLabel = Label(frameHeader, height=8, width=40, bg="#313131", textvariable=examType, fg="#FFFFFF")
+        examTypeLabel.pack(side=LEFT)
+
+        backButton = Button(frameHeader, text="Back", command=back, width=10,
+                            bg="#fed049")
+        backButton.pack(side=RIGHT)
+
+        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter.pack(side=TOP, fill=X)
+
+        frameLeft = Frame(frameCenter, height=470, width=325, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameLeft.pack(side=LEFT)
+
+        examDateLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Date:", fg="#FFFFFF")
+        examDateLOld.place(x=40, y=50)
+
+        labelExamName = Label(frameLeft, height=2, width=15, bg="#313131", textvariable=examDate, fg="#FFFFFF")
+        labelExamName.place(x=185, y=50)
+
+        examTimeLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Time:", fg="#FFFFFF")
+        examTimeLOld.place(x=40, y=150)
+
+        labelExamName = Label(frameLeft, height=2, width=15, bg="#313131", textvariable=examTime, fg="#FFFFFF")
+        labelExamName.place(x=185, y=150)
+
+        examDurLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Duration:", fg="#FFFFFF")
+        examDurLOld.place(x=40, y=250)
+
+        labelExamName = Label(frameLeft, height=2, width=15, bg="#313131", textvariable=examDuration, fg="#FFFFFF")
+        labelExamName.place(x=185, y=250)
+
+        examAtLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF")
+        examAtLOld.place(x=40, y=350)
+
+        labelExamName = Label(frameLeft, height=2, width=15, bg="#313131", textvariable=examAttempt, fg="#FFFFFF")
+        labelExamName.place(x=185, y=350)
+
+        frameRight = Frame(frameCenter, height=470, width=725, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameRight.pack(side=LEFT, fill=X)
+
+        examDateL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Date:", fg="#FFFFFF")
+        examDateL.place(x=30, y=30)
+
+        today = date.today()
+        now = datetime.now()
+
+        self.startDateE = Calendar(frameRight, selectmode='day', year=today.year, month=today.month, day=today.day,
+                                   date_pattern='dd/mm/yy')
+        self.startDateE.place(x=30, y=100)
+
+        examTimeL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Time:", fg="#FFFFFF")
+        examTimeL.place(x=350, y=30)
+
+        self.hour_string_time = StringVar()
+        self.min_string_time = StringVar()
+
+        self.hour_string_dur = StringVar()
+        self.min_string_dur = StringVar()
+
+        self.attemptNum = StringVar()
+
+        f = ('Times', 20)
+
+        self.examTimeHour = Spinbox(frameRight, from_=8, to=23, wrap=True, textvariable=self.hour_string_time, width=2,
+                                    state="readonly",
+                                    font=f, justify=CENTER)
+        self.examTimeMinutes = Spinbox(frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_time, font=f,
+                                       width=2,
+                                       justify=CENTER)
+
+        self.examDurHour = Spinbox(frameRight, from_=0, to=9, wrap=True, textvariable=self.hour_string_dur, width=2,
+                                   state="readonly",
+                                   font=f, justify=CENTER)
+        self.examDurMin = Spinbox(frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_dur, font=f,
+                                  width=2, justify=CENTER)
+
+        self.examTimeHour.place(x=350, y=100)
+        self.examTimeMinutes.place(x=400, y=100)
+
+        examDurL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Duration:", fg="#FFFFFF")
+        examDurL.place(x=30, y=300)
+
+        self.examDurHour.place(x=30, y=370)
+        self.examDurMin.place(x=80, y=370)
+
+        examAtL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF")
+        examAtL.place(x=350, y=300)
+
+        self.examAttemptNum = Spinbox(frameRight, from_=1, to=10, wrap=True, width=2, state="readonly",
+                                      textvariable=self.attemptNum, font=f, justify=CENTER)
+        self.examAttemptNum.place(x=350, y=370)
+
+        buttonUpdate = Button(frameRight, text="Update", width=13, bg="#ca3e47", fg="#FFFFFF", command=self.checkPassed)
+        buttonUpdate.place(x=550, y=200)
+
+    def examCon(self):
+        examInfos = self.getExamInfo(self.controller.shared_data["selectedExam"])
+        self.startDateE.selection_set(examInfos[2])
+        self.hour_string_time.set(examInfos[3][:2])
+        self.min_string_time.set(examInfos[3][3:])
+        self.hour_string_dur.set(examInfos[1][:2])
+        self.min_string_dur.set(examInfos[1][3:])
+        self.attemptNum.set(examInfos[0])
+
+        global examDate
+        examDate.set(examInfos[2])
+
+        global examTime
+        examTime.set(examInfos[3])
+
+        global examDuration
+        examDuration.set(examInfos[1])
+
+        global examAttempt
+        examAttempt.set(examInfos[0])
+
+    def getExamInfo(self, examID):
+        result = db.child("exams").child(examID).get()
+        if result.val() is not None:
+            resultList = []
+            resultList.append(result.val()["AttemptNumbers"])
+            resultList.append(result.val()["Duration"])
+            resultList.append(result.val()["StartDate"])
+            resultList.append(result.val()["StartTime"])
+            return resultList
+        else:
+            return []
+
+    def checkPassed(self):
+        today = date.today()
+
+        examDet = self.getExamInfo(self.controller.shared_data["selectedExam"])
+
+        oldExamDate = str(examDet[2]).split("/")
+
+        yearExam = int("20" + oldExamDate[2])
+        monthExam = int(oldExamDate[1])
+        dayExam = int(oldExamDate[0])
+
+        hourExam = str(examDet[3])[:2]
+        minExam = str(examDet[3])[3:]
+
+        now = datetime.now()
+        hour = now.hour
+        minute = now.minute
+
+        if yearExam < today.year:
+            messagebox.showerror("Exam Started", "Exam started")
+        elif yearExam > today.year:
+            self.updateExam()
+        else:
+            if monthExam < today.month:
+                messagebox.showerror("Exam Started", "Exam started")
+            elif monthExam > today.month:
+                self.updateExam()
+            else:
+                if dayExam < today.day:
+                    messagebox.showerror("Exam Started", "Exam started")
+                elif dayExam > today.day:
+                    self.updateExam()
+                else:
+                    if int(hourExam) < hour:
+                        messagebox.showerror("Exam Started", "Exam started")
+                    elif int(hourExam) > hour:
+                        self.updateExam()
+                    else:
+                        if int(minExam) <= minute:
+                            messagebox.showerror("Exam Started", "Exam started")
+                        else:
+                            self.updateExam()
+
+    def updateExam(self):
+        if len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 1 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str("0" + self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 1:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + "0" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 1 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str("0" + self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 1 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + "0" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+        elif len(str(self.examDurHour.get())) == 2 and len(str(self.examDurMin.get())) == 2 and len(
+                str(self.examTimeHour.get())) == 2 and len(str(self.examTimeMinutes.get())) == 2:
+            self.updateExamDetails(self.controller.shared_data["selectedExam"], str(self.examAttemptNum.get()),
+                                   str(self.examDurHour.get() + ":" + self.examDurMin.get()),
+                                   str(self.startDateE.get_date()),
+                                   str(self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
+
+    def updateExamDetails(self, examID, attempt, duration, startdate, starttime):
+
+        dateExam = startdate.split("/")
+        year = int("20" + dateExam[2])
+        month = int(dateExam[0])
+        day = int(dateExam[1])
+
+        now = datetime.now()
+        hour = now.hour
+        minute = now.minute
+
+        today = date.today()
+
+        if str(self.examDurHour.get()) == "0" and (
+                str(self.examDurMin.get()) == "0" or str(self.examDurMin.get()) == "00"):
+            messagebox.showwarning("Duration 0", "Set the duration")
+        elif str(self.examTimeHour.get()) == "0" and (
+                str(self.examTimeMinutes.get()) == "0" or str(self.examTimeMinutes.get()) == "00"):
+            messagebox.showwarning("Time 0", "Set the Time")
+        else:
+            if 0 <= int(self.examDurMin.get()) <= 59 and 0 <= int(self.examTimeMinutes.get()) <= 59:
+                if year > today.year:
+                    db.child("exams").child(examID).update(
+                        {"AttemptNumbers": attempt, "Duration": duration,
+                         "StartDate": startdate,
+                         "StartTime": starttime})
+                    messagebox.showinfo("Exam Updated", "Exam Updated")
+                    self.controller.get_frame(TeacherMainPage).exams()
+                    self.controller.show_frame(TeacherMainPage)
+                elif year == today.year:
+                    if day > today.month:
+                        db.child("exams").child(examID).update(
+                            {"AttemptNumbers": attempt, "Duration": duration,
+                             "StartDate": startdate,
+                             "StartTime": starttime})
+                        messagebox.showinfo("Exam Updated", "Exam Updated")
+                        self.controller.get_frame(TeacherMainPage).exams()
+                        self.controller.show_frame(TeacherMainPage)
+                    elif day == today.month:
+                        if month > today.day:
+                            db.child("exams").child(examID).update(
+                                {"AttemptNumbers": attempt, "Duration": duration,
+                                 "StartDate": startdate,
+                                 "StartTime": starttime})
+                            messagebox.showinfo("Exam Updated", "Exam Updated")
+                            self.controller.get_frame(TeacherMainPage).exams()
+                            self.controller.show_frame(TeacherMainPage)
+                        elif month == today.day:
+                            if int(self.examTimeHour.get()) > hour:
+                                db.child("exams").child(examID).update(
+                                    {"AttemptNumbers": attempt, "Duration": duration,
+                                     "StartDate": startdate,
+                                     "StartTime": starttime})
+                                messagebox.showinfo("Exam Updated", "Exam Updated")
+                                self.controller.get_frame(TeacherMainPage).exams()
+                                self.controller.show_frame(TeacherMainPage)
+                            elif int(self.examTimeHour.get()) == hour:
+                                if int(self.examTimeMinutes.get()) > minute:
+                                    db.child("exams").child(examID).update(
+                                        {"AttemptNumbers": attempt, "Duration": duration,
+                                         "StartDate": startdate,
+                                         "StartTime": starttime})
+                                    messagebox.showinfo("Exam Updated", "Exam Updated")
+                                    self.controller.get_frame(TeacherMainPage).exams()
+                                    self.controller.show_frame(TeacherMainPage)
+                                else:
+                                    messagebox.showerror("Time Passed", "Minutes passed")
+                            else:
+                                messagebox.showerror("Time Passed", "Hour passed")
+                        else:
+                            messagebox.showwarning("Date Passed", "Select available date")
+                    else:
+                        messagebox.showwarning("Date Passed", "Select available date")
+                else:
+                    messagebox.showwarning("Date Passed", "Select available date")
+            else:
+                messagebox.showerror("Time Error", "Check the minutes")
 
 
 if __name__ == "__main__":
