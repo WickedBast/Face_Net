@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox, ttk, filedialog
+import pytz
+from google.auth.exceptions import RefreshError
 from tkcalendar import Calendar
 from datetime import date
 from datetime import datetime
+from datetime import timedelta
 import pyrebase
 import cv2
 from pathlib import Path
@@ -14,6 +17,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 import pandas as pd
 import numpy as np
+import requests
 import threading
 import webbrowser
 from PIL import ImageTk, Image
@@ -35,7 +39,11 @@ admin = firebase_admin.initialize_app(cred, {"databaseURL": "https://facenet-f06
 firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 auth1 = firebase.auth()
+storage = firebase.storage()
 encodelist = ()
+
+
+# MAIN APP
 
 
 class FaceNet(tk.Tk):
@@ -58,7 +66,8 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage):
+                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage, TestSystem,
+                ChangePicture, ChangeCredentials, ExamDetailStudent):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -73,6 +82,9 @@ class FaceNet(tk.Tk):
     def get_frame(self, page_name):
         frame = self.frames[page_name]
         return frame
+
+
+# SHARED METHODS
 
 
 class Login(tk.Frame):
@@ -97,23 +109,21 @@ class Login(tk.Frame):
                         if str(email.get()).endswith("@isikun.edu.tr") or str(email.get()) == "korhan.koz@isik.edu.tr":
                             global welcomeMessage
                             welcomeMessage.set("Welcome " + self.controller.shared_data["email"].get())
-                            global welcomeMessageStudent
-                            welcomeMessageStudent.set("Welcome " + self.controller.shared_data["email"].get())
-                            global coursesofTeacher
-                            obj2 = TeacherMainPage
-                            coursesofTeacher = obj2.getCourseCodesOfTeacher(self,
-                                                                            self.controller.shared_data["email"].get())
-                            # print(coursesofTeacher)
-                            # obj2.courses(self)
                             controller.get_frame(TeacherMainPage).courses()
                             controller.get_frame(TeacherMainPage).exams()
                             controller.show_frame(TeacherMainPage)
                         else:
+                            global welcomeMessageStudent
+                            welcomeMessageStudent.set("Welcome " + self.controller.shared_data["email"].get())
+                            controller.get_frame(StudentMainPage).coursesS()
+                            controller.get_frame(StudentMainPage).examsS()
                             controller.show_frame(StudentMainPage)
                     else:
                         messagebox.showerror("Email Not Verified or Not Registered", "Please check your email")
-                except:
+                except requests.exceptions.HTTPError:
                     messagebox.showerror("Information Credentials", "Your email or password is wrong")
+                except RefreshError:
+                    messagebox.showerror("Check Date and Time", "Check your PC's date and time")
 
         def refresh():
             email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
@@ -169,6 +179,7 @@ class Login(tk.Frame):
 
 
 class StudentRegister(tk.Frame):
+    # TODO: Give Feedback
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
@@ -177,9 +188,8 @@ class StudentRegister(tk.Frame):
             if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
                     password.get()).isspace() or str(passwordA.get()).isspace() or str(studentID.get()).isspace():
                 messagebox.showerror("Blank spaces", "Please fill the blank areas.")
-            elif len(str(name.get())) == 0 or len(str(surname.get())) == 0 or len(str(email.get())) == 0 \
-                    or len(str(password.get())) == 0 or len(str(passwordA.get())) == 0 or len(
-                str(studentID.get())) == 0:
+            elif len(str(name.get())) == 0 or len(str(surname.get())) == 0 or len(str(email.get())) == 0 or len(
+                    str(password.get())) == 0 or len(str(passwordA.get())) == 0 or len(str(studentID.get())) == 0:
                 messagebox.showerror("Blank spaces", "Please fill the blank areas.")
             elif not str(name.get()).isalpha() or not str(surname.get()).isalpha():
                 messagebox.showerror("Wrong Input", "Your name or surname typed wrong.")
@@ -201,7 +211,6 @@ class StudentRegister(tk.Frame):
                 except:
                     messagebox.showerror("Email Already Exists", "This email is registered to the system.")
                     return
-                # print(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), str(password.get()))
                 encoding = takePhoto()
                 registerStudent(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), encoding,
                                 str(password.get()))
@@ -686,7 +695,8 @@ class StudentMainPage(tk.Frame):
         global welcomeMessageStudent
         welcomeMessageStudent = tk.StringVar()
 
-        nameLabel = Label(frameHeader, height=6, width=50, bg="#313131", textvariable=welcomeMessageStudent, fg="#FFFFFF")
+        nameLabel = Label(frameHeader, height=6, width=50, bg="#313131", textvariable=welcomeMessageStudent,
+                          fg="#FFFFFF")
         welcomeMessageStudent.set("")
         nameLabel.pack(side=RIGHT)
 
@@ -696,21 +706,18 @@ class StudentMainPage(tk.Frame):
         frameButtons = Frame(frameCenter, height=700, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT)
 
-        buttonCC = Button(frameButtons, text="Create Course", command=lambda: controller.show_frame(CreateCourse),
+        buttonTS = Button(frameButtons, text="Test System", command=lambda: controller.show_frame(TestSystem),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCC.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
+        buttonTS.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonDC = Button(frameButtons, text="Delete Course", command=lambda: controller.show_frame(DeleteCourse),
+        buttonCP = Button(frameButtons, text="Change Picture", command=lambda: controller.show_frame(ChangePicture),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonDC.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
+        buttonCP.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonCE = Button(frameButtons, text="Create Exam", command=lambda: controller.show_frame(CreateExam),
-                          width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCE.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
-
-        buttonDE = Button(frameButtons, text="Delete Exam", command=lambda: controller.show_frame(DeleteExam),
-                          width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonDE.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
+        buttonCC = Button(frameButtons, text="Change Credentials",
+                          command=lambda: controller.show_frame(ChangeCredentials),
+                          width=15, bg="#ca3e47", fg="#FFFFFF")
+        buttonCC.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
         # fg="#FFFFFF")
@@ -725,16 +732,19 @@ class StudentMainPage(tk.Frame):
         # courseList = Label(self.frameCourses, height=10, bg="#313131", text="Courses", fg="#FFFFFF")
         # courseList.pack(side=TOP, fill=X)
 
+        canvas = Canvas(self.frameCourses)
+        frameScroll = Frame(canvas)
+        xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=canvas.xview)
+        # canvas.configure(canvas.xview_scroll())
+
+        xscrollbar.pack(side=BOTTOM, fill=X)
+
+        # canvas.pack(side=LEFT)
+
         global coursesofStudent
         coursesofStudent = []
 
         self.coursesS()
-
-        # canvas = Canvas(frameCourses)
-        # scroll = ttk.Scrollbar(frameCourses, orient=HORIZONTAL, command=canvas.xview)
-        # scroll.pack(side=BOTTOM, fill=X)
-        # canvas.configure(xscrollcommand=scroll.set)
-        # canvas.pack(side=LEFT)
 
         global examsofStudent
         examsofStudent = []
@@ -748,10 +758,119 @@ class StudentMainPage(tk.Frame):
         self.examsS()
 
     def coursesS(self):
-        print("courses")
+        global coursesofStudent
+        coursesofStudent = self.getCoursesOfStudent(self.getIDfromMail(self.controller.shared_data["email"].get()))
+
+        for widget in self.frameCourses.winfo_children():
+            widget.destroy()
+
+        for course in coursesofStudent:
+            self.frameCourse = Frame(self.frameCourses, height=250, width=250, bg="#414141", borderwidth=2,
+                                     relief=SUNKEN)
+            self.frameCourse.pack(side=LEFT)
+
+            self.labelCourse = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[1], fg="#FFFFFF")
+            self.labelCourse.place(x=25, y=20)
+
+            self.labelCourseAbb = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[0],
+                                        fg="#FFFFFF")
+            self.labelCourseAbb.place(x=25, y=100)
+
+            self.labelTeacher = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[2],
+                                      fg="#FFFFFF")
+            self.labelTeacher.place(x=25, y=180)
+
+    def getCoursesOfStudent(self, studentID):
+        coursesArrays = []
+        courseQu = db.child("courses").get()
+        for a in courseQu:
+            temp = []
+            temp.append(a.key())
+            temp.append(a.val()['CourseName'])
+            temp.append(a.val()['TeacherMail'])
+            coursesArrays.append(temp)
+
+        studentsCourses = []
+        for course in coursesArrays:
+            result = db.child("coursesENROLL").child(course[0]).child(studentID).get()
+            if result.val() is not None:
+                studentsCourses.append(course)
+
+        # print(studentsCourses)
+        return studentsCourses
+
+    def getIDfromMail(self, mail):
+        result = db.child("students").order_by_child("email").equal_to(mail).get()
+        studentID = ""
+        # print(result.val())
+        if len(result.val()) != 0:
+            studentID = list(result.val())[0]
+        # print(studentID)
+        return studentID
 
     def examsS(self):
-        print("exams")
+        global examsofStudent
+        examsofStudent = self.getExamsOfStudent(self.getIDfromMail(self.controller.shared_data["email"].get()))
+
+        for widget in self.frameExams.winfo_children():
+            widget.destroy()
+
+        for exam in examsofStudent:
+            self.frameExam = Frame(self.frameExams, height=250, width=250, bg="#414141", borderwidth=2, relief=SUNKEN)
+            self.frameExam.pack(side=LEFT)
+
+            self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
+            self.labelExamName.place(x=25, y=20)
+
+            self.labelExamType = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[4], fg="#FFFFFF")
+            self.labelExamType.place(x=25, y=70)
+
+            self.labelExamDate = Label(self.frameExam, height=2, width=28, bg="#313131",
+                                       text=str(exam[5] + " " + exam[6]), fg="#FFFFFF")
+            self.labelExamDate.place(x=25, y=120)
+
+            self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                                     command=lambda examID=exam[0]: self.openExamDetail(examID))
+            self.buttonExam.place(x=75, y=190)
+
+    def getExamsOfStudent(self, studentID):
+        CourseList = self.getCoursesOfStudent(studentID)
+        examsArrays = []
+
+        for course in CourseList:
+            examResult = db.child("exams").order_by_child("CourseID").equal_to(course[0]).get()
+            if len(examResult.val()) != 0:
+                for exam in examResult:
+                    examArray = []
+                    examArray.append(exam.key())
+                    examArray.append(exam.val()["AttemptNumbers"])
+                    examArray.append(exam.val()["CourseID"])
+                    examArray.append(exam.val()["Duration"])
+                    examArray.append(exam.val()["ExamType"])
+                    examArray.append(exam.val()["StartDate"])
+                    examArray.append(exam.val()["StartTime"])
+                    examsArrays.append(examArray)
+
+        # print(examsArrays)
+        return (examsArrays)
+
+    def openExamDetail(self, examID):
+        self.controller.shared_data["selectedExam"] = examID
+
+        global examAbb
+        examAbb.set(self.controller.shared_data["selectedExam"])
+
+        result123 = db.child("exams").child(self.controller.shared_data["selectedExam"]).get()
+
+        global examType
+        examType.set(result123.val()["ExamType"])
+
+        self.controller.get_frame(ExamDetailStudent).examCon()
+
+        self.controller.show_frame(ExamDetailStudent)
+
+
+# TEACHER PAGES
 
 
 class CreateCourse(tk.Frame):
@@ -1049,8 +1168,6 @@ class CreateExam(tk.Frame):
             elif str(min_sb.get()) == "0" and (str(sec_hour.get()) == "0" or str(sec_hour.get()) == "00"):
                 messagebox.showwarning("Time 0", "Set the Time")
             else:
-                print(int(sec_hour.get()))
-                print(nowE.minute)
                 if 0 <= int(min_dur.get()) <= 59 and 0 <= int(sec_hour.get()) <= 59:
                     if year > todayE.year:
                         if examQu.val() is None:
@@ -1983,6 +2100,384 @@ class ExamDetailPage(tk.Frame):
                     messagebox.showwarning("Date Passed", "Select available date")
             else:
                 messagebox.showerror("Time Error", "Check the minutes")
+
+
+# STUDENT PAGES
+
+
+class TestSystem(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        def back():
+            controller.show_frame(StudentMainPage)
+
+        def takePhoto():
+            cam = cv2.VideoCapture(0)
+            cv2.namedWindow("test")
+            while True:
+                ret, frame = cam.read()
+                if not ret:
+                    # print("failed to grab frame")
+                    break
+                cv2.imshow("test", frame)
+
+                k = cv2.waitKey(1)
+                if k % 256 == 27:
+                    # ESC pressed
+                    # print("Escape hit, closing...")
+                    break
+                elif k % 256 == 32:
+                    # SPACE pressed
+
+                    parent = Path(__file__).parent
+                    # print(parent)
+                    registerPic = Path(parent, 'Temp', 'TEST.png').__str__()
+                    # print(registerPic)
+                    cv2.imwrite(registerPic, frame)
+                    myList = os.listdir('Temp')
+                    # print(myList)
+                    images = []
+                    for cl in myList:
+                        x = Path(parent, 'Temp')
+                        curImg = cv2.imread(f'{x}/{cl}')
+                        images.append(curImg)
+                    # print(images)
+                    encodelist = findEncodings(images)
+
+            cam.release()
+
+            cv2.destroyAllWindows()
+            return list(encodelist[0])
+
+        def findEncodings(images):
+            encodeList = []
+            for img in images:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                boxes = face_recognition.face_locations(img, model="hog")
+                encode = face_recognition.face_encodings(img, boxes, model="small")[0]
+                # print(encode)
+                encodeList.append(encode)
+            return encodeList
+
+        welcome = Label(self, text=" TEST SYSTEM ", width=150, height=5, bg="#414141", fg="#FFFFFF")
+        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        buttonBack = Button(self, text="Back", command=back, bg="#fed049", width=10)
+        buttonBack.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
+
+        buttonAction = Button(self, text="Test", command=takePhoto, fg="white", bg="#ca3e47", width=10)
+        buttonAction.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+
+
+class ChangePicture(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+
+class ChangeCredentials(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        def refresh():
+            self.name.bind("<FocusIn>", lambda args: self.name.delete(0, 'end'))
+            self.surname.bind("<FocusIn>", lambda args: self.surname.delete(0, 'end'))
+
+        def back():
+            self.name.delete(0, 'end')
+            self.name.insert(0, "Name")
+            self.surname.delete(0, 'end')
+            self.surname.insert(0, "Surname")
+            controller.show_frame(StudentMainPage)
+
+        welcome = Label(self, text=" CHANGE PASSWORD ", width=150, height=5, bg="#414141", fg="#FFFFFF")
+        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
+
+        self.name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        self.name.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        self.name.insert(0, "Name")
+
+        self.surname = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        self.surname.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+        self.surname.insert(0, "Surname")
+
+        refresh()
+
+        buttonPass = Button(self, text="Change Password", command=self.updatePassword, fg="white", bg="#ca3e47",
+                            width=15)
+        buttonPass.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+
+        buttonBack = Button(self, text="Back", command=back, bg="#fed049", width=10)
+        buttonBack.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
+
+        buttonAction = Button(self, text="Submit", command=self.updateChanges, fg="white", bg="#ca3e47", width=10)
+        buttonAction.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+
+    def updateChanges(self):
+        if str(self.name.get()).isspace() or str(self.surname.get()).isspace():
+            messagebox.showerror("Blank spaces", "Please fill the blank areas.")
+        elif len(str(self.name.get())) == 0 or len(str(self.surname.get())) == 0:
+            messagebox.showerror("Blank spaces", "Please fill the blank areas.")
+        elif not str(self.name.get()).isalpha() or not str(self.surname.get()).isalpha():
+            messagebox.showerror("Wrong Input", "Your name or surname typed wrong.")
+        else:
+            messagebox.showinfo("Changes Saved", "Your profile is updated")
+            self.controller.show_frame(StudentMainPage)
+
+    def updatePassword(self):
+        auth1.send_password_reset_email(self.controller.shared_data["email"].get())
+        messagebox.showinfo("Email Send", "An email has been send to your email")
+        self.controller.show_frame(StudentMainPage)
+
+
+class ExamDetailStudent(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        frameHeader.pack(side=TOP, fill=X)
+
+        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logoLabel = Label(frameHeader, image=logo)
+        # logoLabel.pack(side=LEFT)
+
+        def back():
+            controller.get_frame(StudentMainPage).coursesS()
+            controller.get_frame(StudentMainPage).examsS()
+            controller.show_frame(StudentMainPage)
+
+        global examAbbS
+        examAbbS = tk.StringVar()
+
+        global examTypeS
+        examTypeS = tk.StringVar()
+
+        global examDateS
+        examDateS = tk.StringVar()
+
+        global examTimeS
+        examTimeS = tk.StringVar()
+
+        global examDurationS
+        examDurationS = tk.StringVar()
+
+        global examAttemptS
+        examAttemptS = tk.StringVar()
+
+        self.examAbbLabel = Label(frameHeader, height=8, width=20, bg="#313131", textvariable=examAbbS, fg="#FFFFFF")
+        self.examAbbLabel.pack(side=LEFT)
+
+        examTypeLabel = Label(frameHeader, height=8, width=40, bg="#313131", textvariable=examTypeS, fg="#FFFFFF")
+        examTypeLabel.pack(side=LEFT)
+
+        backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
+        backButton.pack(side=RIGHT)
+
+        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter.pack(side=TOP, fill=X)
+
+        examNameLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Name:", fg="#FFFFFF")
+        examNameLS.place(x=200, y=60)
+
+        labelExamNameS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAbbS, fg="#FFFFFF")
+        labelExamNameS.place(x=345, y=60)
+
+        examTypeLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Type:", fg="#FFFFFF")
+        examTypeLS.place(x=600, y=60)
+
+        labelExamTypeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTypeS, fg="#FFFFFF")
+        labelExamTypeS.place(x=745, y=60)
+
+        examDateLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Date:", fg="#FFFFFF")
+        examDateLS.place(x=200, y=160)
+
+        labelExamDateS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDateS, fg="#FFFFFF")
+        labelExamDateS.place(x=345, y=160)
+
+        examTimeLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Time:", fg="#FFFFFF")
+        examTimeLS.place(x=600, y=160)
+
+        labelExamTimeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTimeS, fg="#FFFFFF")
+        labelExamTimeS.place(x=745, y=160)
+
+        examDurLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Duration:", fg="#FFFFFF")
+        examDurLS.place(x=200, y=260)
+
+        labelExamDurS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDurationS, fg="#FFFFFF")
+        labelExamDurS.place(x=345, y=260)
+
+        examAtLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF")
+        examAtLS.place(x=600, y=260)
+
+        labelExamAtS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAttemptS, fg="#FFFFFF")
+        labelExamAtS.place(x=745, y=260)
+
+        buttonExam = Button(frameCenter, text="Enter", width=13, bg="#ca3e47", fg="#FFFFFF", command=self.enterExam)
+        buttonExam.place(x=480, y=360)
+
+    def examCon(self):
+        examInfos = self.getExamInfo(self.controller.shared_data["selectedExam"])
+
+        global examDateS
+        examDateS.set(examInfos[2])
+
+        global examTimeS
+        examTimeS.set(examInfos[3])
+
+        global examDurationS
+        examDurationS.set(examInfos[1])
+
+        global examAttemptS
+        examAttemptS.set(examInfos[0])
+
+        global examTypeS
+        examTypeS.set(examInfos[4])
+
+        global examAbbS
+        examAbbS.set(examInfos[5])
+
+    def getExamInfo(self, examID):
+        result = db.child("exams").child(examID).get()
+        if result.val() is not None:
+            resultList = []
+            resultList.append(result.val()["AttemptNumbers"])
+            resultList.append(result.val()["Duration"])
+            resultList.append(result.val()["StartDate"])
+            resultList.append(result.val()["StartTime"])
+            resultList.append(result.val()["ExamType"])
+            resultList.append(result.key())
+            return resultList
+        else:
+            return []
+
+    def getIDfromMailS(self, mail):
+        resultIDS = db.child("students").order_by_child("email").equal_to(mail).get()
+        studentID = list(resultIDS.val())[0]
+        return studentID
+
+    def enterExam(self):
+        currentExam = self.getExamInfo(self.controller.shared_data["selectedExam"])
+
+        startDate = currentExam[2]
+        startTime = currentExam[3]
+        duration = currentExam[1]
+        attempNum = currentExam[0]
+
+        splitArrDur = duration.split(sep=":")
+        lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+        tempDelta = timedelta(minutes=lenInMin)
+
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
+        splitArrDate = startDate.split(sep="/")
+        splitArrTime = startTime.split(sep=":")
+        startTimeE = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                              int(splitArrTime[0]), int(splitArrTime[1]))
+        startTimeE = startTimeE.replace(tzinfo=tz_IN)
+
+        endTime = startTimeE + tempDelta
+
+        studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
+
+        resultExamEn = db.child("examEnroll").child(self.controller.shared_data["selectedExam"]).child(studentID).child("Attempts").get()
+        # print(len(resultExamEn.val()))
+
+        if datetime_Now > startTimeE:
+            if datetime_Now < endTime:
+                if resultExamEn.val() is not None:
+                    if len(resultExamEn.val()) < int(attempNum):
+                        self.faceRecog(self.getIDfromMailS(self.controller.shared_data["email"].get()),
+                                   self.controller.shared_data["selectedExam"])
+                    else:
+                        messagebox.showerror("Lack of Attempt", "No more attempts allowed")
+                else:
+                    self.faceRecog(self.getIDfromMailS(self.controller.shared_data["email"].get()),
+                                   self.controller.shared_data["selectedExam"])
+            else:
+                messagebox.showerror("Exam Date Error", "Exam ended")
+        else:
+            messagebox.showerror("Exam Date Error", "Exam has not started yet")
+
+    def faceRecog(self, studentID, ExamID):
+        countOfSucces = 0
+        result = db.child("students").child(studentID).get()
+        faceEncoding = np.asarray(result.val()["encoding"])
+        resultExamEn = db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").get()
+        # print(resultExamEn.val())
+        attemptImg = None
+        cap = cv2.VideoCapture(0)
+        escapecondition = True
+
+        while True:
+            k = cv2.waitKey(1)
+
+            if k % 256 == 27:
+                # ESC pressed
+                escapecondition = False
+                print("Escape hit, closing...")
+                break
+            success, img = cap.read()
+            if not success:
+                print("failed to grab frame")
+                break
+            if countOfSucces == 5:
+                attemptImg = img
+                break
+
+            cv2.imshow("test", img)
+            imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+            imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
+
+            facesCurFrame = face_recognition.face_locations(imgSmall)
+            # print(len(facesCurFrame))
+            # print(facesCurFrame)
+            encodesCurFrame = face_recognition.face_encodings(imgSmall, facesCurFrame)
+            # print(encodesCurFrame)
+            if len(encodesCurFrame) == 1:
+                matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
+                print(matches[0])
+                if matches[0]:
+                    countOfSucces = countOfSucces + 1
+
+            cv2.waitKey(1)
+
+        if escapecondition:
+            print("Recognition Successful")
+            if resultExamEn.val() is None:
+                parent = Path(__file__).parent
+                registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
+                cv2.imwrite(registerPic, attemptImg)
+                path_on_cloud = ExamID + "/" + studentID + "/" + "Attempt-1"
+                storage.child(path_on_cloud).put(registerPic)
+
+                data1 = {"PathToImg": path_on_cloud}
+                db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child("Attempt-1").set(data1)
+            else:
+                # print(resultExamEn.val())
+                # print(len(resultExamEn.val()))
+
+                parent = Path(__file__).parent
+                registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
+                cv2.imwrite(registerPic, attemptImg)
+                # print(str(len(resultExamEn.val())))
+                path_on_cloud = ExamID + "/" + studentID + "/" + "Attempt-" + str(1 + len(resultExamEn.val()))
+                storage.child(path_on_cloud).put(registerPic)
+
+                data1 = {"PathToImg": path_on_cloud}
+                db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child(
+                    "Attempt-" + str(1 + len(resultExamEn.val()))).set(data1)
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+# MAIN METHOD
 
 
 if __name__ == "__main__":
