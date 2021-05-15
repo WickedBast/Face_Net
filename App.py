@@ -66,8 +66,8 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage, TestSystem,
-                ChangePicture, ChangeCredentials, ExamDetailStudent):
+                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage, ChangeCredentials,
+                ExamDetailStudent):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -84,7 +84,7 @@ class FaceNet(tk.Tk):
         return frame
 
 
-# SHARED METHODS
+# SHARED PAGES
 
 
 class Login(tk.Frame):
@@ -706,11 +706,11 @@ class StudentMainPage(tk.Frame):
         frameButtons = Frame(frameCenter, height=700, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT)
 
-        buttonTS = Button(frameButtons, text="Test System", command=lambda: controller.show_frame(TestSystem),
+        buttonTS = Button(frameButtons, text="Test System", command=self.test,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonTS.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonCP = Button(frameButtons, text="Change Picture", command=lambda: controller.show_frame(ChangePicture),
+        buttonCP = Button(frameButtons, text="Change Picture", command=self.change,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonCP.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
@@ -868,6 +868,205 @@ class StudentMainPage(tk.Frame):
         self.controller.get_frame(ExamDetailStudent).examCon()
 
         self.controller.show_frame(ExamDetailStudent)
+
+    def getIDfromMailS(self, mail):
+        resultIDS = db.child("students").order_by_child("email").equal_to(mail).get()
+        studentID = list(resultIDS.val())[0]
+        return studentID
+
+    def test(self):
+        studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
+        self.faceRecogCheck(studentID)
+        self.controller.get_frame(StudentMainPage).coursesS()
+        self.controller.get_frame(StudentMainPage).examsS()
+
+    def faceRecogCheck(self, studentID):
+        countOfSucces = 0
+        result = db.child("students").child(studentID).get()
+        faceEncoding = np.asarray(result.val()["encoding"])
+        cap = cv2.VideoCapture(0)
+        escapecondition = True
+
+        while True:
+            k = cv2.waitKey(1)
+
+            if k % 256 == 27:
+                # ESC pressed
+                escapecondition = False
+                # print("Escape hit, closing...")
+                break
+            success, img = cap.read()
+            if not success:
+                # print("failed to grab frame")
+                break
+            if countOfSucces == 5:
+                # print("Exit first While")
+                break
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            # org
+            org = (00, 420)
+            org2 = (00, 450)
+            # fontScale
+            fontScale = 0.75
+            # Red color in BGR
+            colorRed = (0, 0, 255)
+            colorWhite = (255, 255, 255)
+            # Line thickness of 2 px
+            thickness = 2
+            cv2.putText(img, "Face Recognition still in progress", org, font, fontScale,
+                        colorRed, thickness, cv2.LINE_AA, False)
+            cv2.putText(img, "Hold Escape to Exit", org2, font, fontScale,
+                        colorWhite, thickness, cv2.LINE_AA, False)
+            cv2.imshow("test", img)
+            imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+            imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
+
+            facesCurFrame = face_recognition.face_locations(imgSmall)
+            # print(len(facesCurFrame))
+            # print(facesCurFrame)
+            encodesCurFrame = face_recognition.face_encodings(imgSmall, facesCurFrame)
+            # print(encodesCurFrame)
+            if (len(encodesCurFrame) == 1):
+                matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
+                # print(matches[0])
+                if (matches[0]):
+                    countOfSucces = countOfSucces + 1
+
+            cv2.waitKey(1)
+        if (escapecondition == True):
+            while True:
+                k = cv2.waitKey(1)
+                if k % 256 == 27:
+                    # ESC pressed
+                    escapecondition = False
+                    # print("Escape hit, closing...")
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    break
+                success, img = cap.read()
+                if not success:
+                    # print("failed to grab frame")
+                    break
+
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                # org
+                org = (00, 420)
+                org2 = (00, 450)
+                # fontScale
+                fontScale = 0.75
+                # Red color in BGR
+                colorGreen = (0, 128, 0)
+                colorWhite = (255, 255, 255)
+                # Line thickness of 2 px
+                thickness = 2
+                cv2.putText(img, "Face Recognition Completed Successfully", org, font, fontScale,
+                            colorGreen, thickness, cv2.LINE_AA, False)
+                cv2.putText(img, "Hold Escape to Exit", org2, font, fontScale,
+                            colorWhite, thickness, cv2.LINE_AA, False)
+                cv2.imshow("test", img)
+                cv2.waitKey(1)
+
+    def change(self):
+        studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
+        self.changeEncoding(studentID)
+        self.controller.get_frame(StudentMainPage).coursesS()
+        self.controller.get_frame(StudentMainPage).examsS()
+
+    def changeEncoding(self, studentID):
+        state = False
+        cam = cv2.VideoCapture(0)
+        cv2.namedWindow("test")
+        while True:
+            ret, frame = cam.read()
+            if not ret:
+                # print("failed to grab frame")
+                break
+            if state:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                # org
+                org = (00, 420)
+                org2 = (00, 450)
+                # fontScale
+                fontScale = 0.75
+                # Red color in BGR
+                colorGreen = (0, 128, 0)
+                colorWhite = (255, 255, 255)
+                # Line thickness of 2 px
+                thickness = 2
+                cv2.putText(frame, "Face Encoding Taken Succesfully", org, font, fontScale,
+                            colorGreen, thickness, cv2.LINE_AA, False)
+                cv2.putText(frame, "Hold Escape to exit and finish the update.", org2, font, fontScale,
+                            colorWhite, thickness, cv2.LINE_AA, False)
+            if state == False:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                # org
+                org = (00, 420)
+                org2 = (00, 450)
+                # fontScale
+                fontScale = 0.75
+                # Red color in BGR
+                colorRed = (0, 0, 255)
+                colorWhite = (255, 255, 255)
+                # Line thickness of 2 px
+                thickness = 2
+                cv2.putText(frame, "Face Encoding is not taken, Press Space to take picture.", org, font, 0.65,
+                            colorRed, thickness, cv2.LINE_AA, False)
+                cv2.putText(frame, "Hold Escape to exit.", org2, font, fontScale,
+                            colorWhite, thickness, cv2.LINE_AA, False)
+
+            cv2.imshow("test", frame)
+            k = cv2.waitKey(1)
+            if k % 256 == 27:
+                # ESC pressed
+                # print("Escape hit, closing...")
+                break
+            elif k % 256 == 32:
+                # SPACE pressed
+                parent = Path(__file__).parent
+                myList = os.listdir('Temp')
+                filtered_files = [file for file in myList if file.endswith(".png")]
+                for file in filtered_files:
+                    path_to_file = os.path.join("Temp", file)
+                    os.remove(path_to_file)
+                registerPic = Path(parent, 'Temp', 'TEST.png').__str__()
+
+                cv2.imwrite(registerPic, frame)
+                myList = os.listdir('Temp')
+                # print(myList)
+                images = []
+                for cl in myList:
+                    x = Path(parent, 'Temp')
+                    curImg = cv2.imread(f'{x}/{cl}')
+                    images.append(curImg)
+                # print(images)
+                # print(len(images[0]))
+                try:
+                    encodelist = self.findEncodings(images)
+                    # print(len(encodelist))
+                    if len(encodelist[0]) > 125:
+                        # print("image is okay")
+                        state = True
+                    else:
+                        pass
+                        # print("it is not okay")
+                except:
+                    state = False
+        if state:
+            db.child("students").child(studentID).update({"encoding": list(encodelist[0])})
+
+        cam.release()
+        cv2.destroyAllWindows()
+
+    def findEncodings(self, images):
+        encodeList = []
+        for img in images:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            boxes = face_recognition.face_locations(img, model="hog")
+            encode = face_recognition.face_encodings(img, boxes, model="small")[0]
+            # print(encode)
+            encodeList.append(encode)
+        return encodeList
 
 
 # TEACHER PAGES
@@ -1566,9 +1765,6 @@ class CourseDetailPage(tk.Frame):
                 stuendata = {"takesCourse": True}
                 db.child("coursesENROLL").child(courseID).child(stuID).set(stuendata)
 
-            else:
-                print("student exists in the course")
-
         def back():
             controller.get_frame(TeacherMainPage).courses()
             controller.get_frame(TeacherMainPage).exams()
@@ -2105,78 +2301,6 @@ class ExamDetailPage(tk.Frame):
 # STUDENT PAGES
 
 
-class TestSystem(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg="#414141")
-        self.controller = controller
-
-        def back():
-            controller.show_frame(StudentMainPage)
-
-        def takePhoto():
-            cam = cv2.VideoCapture(0)
-            cv2.namedWindow("test")
-            while True:
-                ret, frame = cam.read()
-                if not ret:
-                    # print("failed to grab frame")
-                    break
-                cv2.imshow("test", frame)
-
-                k = cv2.waitKey(1)
-                if k % 256 == 27:
-                    # ESC pressed
-                    # print("Escape hit, closing...")
-                    break
-                elif k % 256 == 32:
-                    # SPACE pressed
-
-                    parent = Path(__file__).parent
-                    # print(parent)
-                    registerPic = Path(parent, 'Temp', 'TEST.png').__str__()
-                    # print(registerPic)
-                    cv2.imwrite(registerPic, frame)
-                    myList = os.listdir('Temp')
-                    # print(myList)
-                    images = []
-                    for cl in myList:
-                        x = Path(parent, 'Temp')
-                        curImg = cv2.imread(f'{x}/{cl}')
-                        images.append(curImg)
-                    # print(images)
-                    encodelist = findEncodings(images)
-
-            cam.release()
-
-            cv2.destroyAllWindows()
-            return list(encodelist[0])
-
-        def findEncodings(images):
-            encodeList = []
-            for img in images:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                boxes = face_recognition.face_locations(img, model="hog")
-                encode = face_recognition.face_encodings(img, boxes, model="small")[0]
-                # print(encode)
-                encodeList.append(encode)
-            return encodeList
-
-        welcome = Label(self, text=" TEST SYSTEM ", width=150, height=5, bg="#414141", fg="#FFFFFF")
-        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
-
-        buttonBack = Button(self, text="Back", command=back, bg="#fed049", width=10)
-        buttonBack.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
-
-        buttonAction = Button(self, text="Test", command=takePhoto, fg="white", bg="#ca3e47", width=10)
-        buttonAction.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
-
-
-class ChangePicture(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg="#414141")
-        self.controller = controller
-
-
 class ChangeCredentials(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
@@ -2385,7 +2509,8 @@ class ExamDetailStudent(tk.Frame):
 
         studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
 
-        resultExamEn = db.child("examEnroll").child(self.controller.shared_data["selectedExam"]).child(studentID).child("Attempts").get()
+        resultExamEn = db.child("examEnroll").child(self.controller.shared_data["selectedExam"]).child(studentID).child(
+            "Attempts").get()
         # print(len(resultExamEn.val()))
 
         if datetime_Now > startTimeE:
@@ -2393,7 +2518,7 @@ class ExamDetailStudent(tk.Frame):
                 if resultExamEn.val() is not None:
                     if len(resultExamEn.val()) < int(attempNum):
                         self.faceRecog(self.getIDfromMailS(self.controller.shared_data["email"].get()),
-                                   self.controller.shared_data["selectedExam"])
+                                       self.controller.shared_data["selectedExam"])
                     else:
                         messagebox.showerror("Lack of Attempt", "No more attempts allowed")
                 else:
@@ -2420,11 +2545,11 @@ class ExamDetailStudent(tk.Frame):
             if k % 256 == 27:
                 # ESC pressed
                 escapecondition = False
-                print("Escape hit, closing...")
+                # print("Escape hit, closing...")
                 break
             success, img = cap.read()
             if not success:
-                print("failed to grab frame")
+                # print("failed to grab frame")
                 break
             if countOfSucces == 5:
                 attemptImg = img
@@ -2441,14 +2566,14 @@ class ExamDetailStudent(tk.Frame):
             # print(encodesCurFrame)
             if len(encodesCurFrame) == 1:
                 matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
-                print(matches[0])
+                # print(matches[0])
                 if matches[0]:
                     countOfSucces = countOfSucces + 1
 
             cv2.waitKey(1)
 
         if escapecondition:
-            print("Recognition Successful")
+            # print("Recognition Successful")
             if resultExamEn.val() is None:
                 parent = Path(__file__).parent
                 registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
