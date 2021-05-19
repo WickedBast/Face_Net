@@ -18,6 +18,7 @@ from firebase_admin import auth
 import pandas as pd
 import numpy as np
 import requests
+from threading import *
 import threading
 import webbrowser
 from PIL import ImageTk, Image
@@ -67,7 +68,7 @@ class FaceNet(tk.Tk):
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
                 CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage, ChangeCredentials,
-                ExamDetailStudent):
+                ExamDetailStudent, ExamPage):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -2597,9 +2598,313 @@ class ExamDetailStudent(tk.Frame):
                 data1 = {"PathToImg": path_on_cloud}
                 db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child(
                     "Attempt-" + str(1 + len(resultExamEn.val()))).set(data1)
+            self.controller.show_frame(ExamPage)
 
         cap.release()
         cv2.destroyAllWindows()
+
+
+class ExamPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        global ExitButtonState
+        ExitButtonState = False
+
+        def back():
+            global ExitButtonState
+            ExitButtonState = True
+            controller.get_frame(StudentMainPage).coursesS()
+            controller.get_frame(StudentMainPage).examsS()
+            controller.show_frame(StudentMainPage)
+
+        buttonStart = Button(self, text="Start Exam", command=self.exam, fg="white",
+                                bg="#ca3e47", width=10)
+        buttonStart.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+
+        buttonExit = Button(self, text="Exit Exam", command=back, fg="white", bg="#ca3e47", width=10)
+        buttonExit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+
+    def exam(self):
+        global examAbbS
+        global examDateS
+        global examTimeS
+        global examDurationS
+        if self.controller.shared_data["email"].get() != "Email":
+            stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(
+                self.controller.shared_data["email"].get())
+            t11 = Thread(target=self.threadingS, args=[examDateS.get(), examTimeS.get(), examDurationS.get(), stuID, examAbbS.get()])
+            t11.start()
+            # self.threadingS(examDateS.get(), examTimeS.get(), examDurationS.get(), stuID, examAbbS.get())
+
+    def threadingS(self, startDate, startTime, duration, studentID, examID):
+        global lastTimeSolErrOcc
+        global ExitButtonState
+        ExitButtonState = False
+        lastTimeSolErrOcc = 0
+        # get Encoings of the student
+        result = db.child("students").child(studentID).get()
+        faceEncoding = np.asarray(result.val()["encoding"])
+        # Call work function
+
+        # Get timezone obj for Istanbul
+        tz_NY = pytz.timezone('Asia/Beirut')
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        i = 0
+        splitArrDate = startDate.split(sep="/")
+        splitArrTime = startTime.split(sep=":")
+        startTime = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                             int(splitArrTime[0]), int(splitArrTime[1]))
+        startTime = startTime.replace(tzinfo=tz_IN)
+        print(startTime)
+        print(startTime + timedelta(minutes=6))
+        print(type(startTime))
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+        # create a array for check times and check status.
+        frCheckTimes = []
+        # for determination of the frequency of the checks
+        splitArrDur = duration.split(sep=":")
+        lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+        tempDelta1 = timedelta(minutes=lenInMin)
+        endTime = startTime + tempDelta1
+        print(endTime, "!!")
+
+        for i in range(0, 9):
+            tempDelta = timedelta(minutes=(i + 1) * lenInMin / 10)
+            print((startTime + tempDelta).time())
+            frCheckTimes.append([(startTime + tempDelta), False])
+
+        print(frCheckTimes)
+        datetime_NowArr = datetime.now(tz_IN)
+        indexForFR = 1
+        for a in frCheckTimes:
+            print(indexForFR)
+            if (datetime_NowArr - a[0]) > timedelta(minutes=1):
+                a[1] = True
+                if (db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child(
+                        "FR-" + str(indexForFR)).get().val() is None):
+                    data1 = {"PathToImg": "", "Status": "Missed"}
+                    db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child(
+                        "FR-" + str(indexForFR)).set(data1)
+            indexForFR = indexForFR + 1
+
+        print(frCheckTimes)
+        resultOnGoing = db.child(examID).child(studentID).child("FrChecks").get()
+
+        while True:
+            success, img = cap.read()
+            imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+            imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
+            datetime_Now = datetime.now(tz_IN)
+            # print("Real time:", datetime_Now.strftime("%H:%M:%S"))
+            # print(type(datetime_Now))
+            # print("-----------------------------------------------")
+            if (datetime_Now - endTime).days == 0:
+                print("EXAM OVER")
+                break
+            if ExitButtonState:
+                break
+            # Thread that checks if there are two or more faces in the img
+            t2 = Thread(target=self.work2, args=[img, studentID, examID])
+            t2.start()
+            t2.join()
+            for a in frCheckTimes:
+                # print(a[0])
+                # print(datetime_Now)
+                # print((datetime_Now -a[0]).seconds/60)
+                # print((datetime_Now - a[0]).days)
+                # print((datetime_Now-a[0])>timedelta(minutes=1))
+                # print()
+                if (datetime_Now - a[0]).days == 0 and a[1] == False:
+                    print("Starting FR for", a[0], " Time is:", datetime_Now)
+                    t1 = Thread(target=self.work, args=[cap, faceEncoding, studentID, examID])
+                    t1.start()
+                    # t1.join()
+                    a[1] = True
+                    print(frCheckTimes)
+
+            # print((frCheckTimes))
+
+            # t1 = Thread(target=work, args=[img,i])
+            # t2 = Thread(target=work2, args=[img,i])
+            # t1.start()
+            # t2.start()
+            i = i + 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+    def work(self, cap, faceEncoding, studentID, examID):
+        print("sleep time start")
+        successState = False
+        successImg = None
+        nonsuccessImg = None
+        countOfSucces = 0
+
+        tryCount = 0
+        while True:
+            success, img = cap.read()
+            if not success:
+                print("failed to grab frame")
+                break
+            if countOfSucces == 5:
+                successState = True
+                break
+            if tryCount == 100:
+                print("Recog failed and reported.")
+                break
+            imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+            imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
+
+            facesCurFrame = face_recognition.face_locations(imgSmall)
+            # print(len(facesCurFrame))
+            # print(facesCurFrame)
+            encodesCurFrame = face_recognition.face_encodings(imgSmall, facesCurFrame)
+            # print(encodesCurFrame)
+            if (len(encodesCurFrame) == 1):
+                matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
+                print(matches[0])
+                if (matches[0]):
+                    successImg = img
+                    countOfSucces = countOfSucces + 1
+                    tryCount = tryCount + 1
+                else:
+                    nonsuccessImg = img
+                    tryCount = tryCount + 1
+            else:
+                nonsuccessImg = img
+                tryCount = tryCount + 1
+
+        resultForFR = db.child("examEnroll").child(examID).child(studentID).child("FrChecks").get()
+        if (resultForFR.val() is None):
+            parent = Path(__file__).parent
+            registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
+            if successState:
+                cv2.imwrite(registerPic, successImg)
+            else:
+                cv2.imwrite(registerPic, nonsuccessImg)
+
+            path_on_cloud = examID + "/" + studentID + "/" + "FR-1"
+            storage.child(path_on_cloud).put(registerPic)
+
+            data1 = {"PathToImg": path_on_cloud, "Status": successState}
+            db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child("FR-1").set(data1)
+        else:
+            # print(resultExamEn.val())
+            # print(len(resultExamEn.val()))
+
+            parent = Path(__file__).parent
+            registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
+            if successState:
+                cv2.imwrite(registerPic, successImg)
+            else:
+                cv2.imwrite(registerPic, nonsuccessImg)
+
+            path_on_cloud = examID + "/" + studentID + "/" + "FR-" + str(1 + len(resultForFR.val()))
+            storage.child(path_on_cloud).put(registerPic)
+
+            data1 = {"PathToImg": path_on_cloud, "Status": successState}
+            db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child(
+                "FR-" + str(1 + len(resultForFR.val()))).set(data1)
+
+            # cv2.waitKey(1)
+
+        # parent = Path(__file__).parent
+        # print(parent)
+        # registerPic = Path(parent, 'Temp', 'TEST-'+str(numOfImg)+'.png').__str__()
+        # print(registerPic)
+        # cv2.imwrite(registerPic, img)
+
+        print("sleep time stop")
+
+    def work2(self, img, studentID, examID):
+        # imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+        # imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+        global lastTimeSolErrOcc
+        print(lastTimeSolErrOcc, "!!!!!")
+
+        facesCurFrame = face_recognition.face_locations(img)
+        # print(len(facesCurFrame))
+        # print(facesCurFrame)
+        # encodesCurFrame = face_recognition.face_encodings(img, facesCurFrame)
+        # print(encodesCurFrame)
+        print(len(facesCurFrame))
+
+        if (lastTimeSolErrOcc == 0):
+            print("Time constraint 1 is ok entering the if")
+            if (len(facesCurFrame) > 1):
+                resultExamSol = db.child("examEnroll").child(examID).child(studentID).child("Solditute").get()
+                if (resultExamSol.val() is None):
+                    print("THERE ARE 2 PEOPLE IN THE IMAGE")
+                    lastTimeSolErrOcc = datetime_Now
+                    parent = Path(__file__).parent
+                    registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
+                    cv2.imwrite(registerPic, img)
+                    path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-1"
+                    storage.child(path_on_cloud).put(registerPic)
+                    print("Sent IMG FIRST WAY")
+
+                    data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
+                    db.child("examEnroll").child(examID).child(studentID).child("Solditute").child("Violation-1").set(
+                        data1)
+
+
+                else:
+                    lastTimeSolErrOcc = datetime_Now
+                    parent = Path(__file__).parent
+                    registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
+                    cv2.imwrite(registerPic, img)
+                    path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-" + str(
+                        1 + len(resultExamSol.val()))
+                    storage.child(path_on_cloud).put(registerPic)
+
+                    data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
+                    db.child("examEnroll").child(examID).child(studentID).child("Solditute").child(
+                        "Violation-" + str(1 + len(resultExamSol.val()))).set(data1)
+
+
+        elif (datetime_Now - lastTimeSolErrOcc) > timedelta(minutes=0.5):
+            print("Time constraint 2 is ok entering the if")
+            if (len(facesCurFrame) > 1):
+                resultExamSol = db.child("examEnroll").child(examID).child(studentID).child("Solditute").get()
+                if (resultExamSol.val() is None):
+                    lastTimeSolErrOcc = datetime_Now
+                    print("THERE ARE 2 PEOPLE IN THE IMAGE")
+                    parent = Path(__file__).parent
+                    registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
+                    cv2.imwrite(registerPic, img)
+                    path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-1"
+                    storage.child(path_on_cloud).put(registerPic)
+                    print("Sent IMG SECOND WAY")
+                    print(resultExamSol.val())
+                    print("*****************************")
+
+                    data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
+                    db.child("examEnroll").child(examID).child(studentID).child("Solditute").child("Violation-1").set(
+                        data1)
+
+
+                else:
+                    lastTimeSolErrOcc = datetime_Now
+                    parent = Path(__file__).parent
+                    registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
+                    cv2.imwrite(registerPic, img)
+                    path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-" + str(
+                        1 + len(resultExamSol.val()))
+                    storage.child(path_on_cloud).put(registerPic)
+
+                    data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
+                    db.child("examEnroll").child(examID).child(studentID).child("Solditute").child(
+                        "Violation-" + str(1 + len(resultExamSol.val()))).set(data1)
+
+
+        else:
+            print("Time constarint is not fulfilled")
 
 
 # MAIN METHOD
