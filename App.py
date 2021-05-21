@@ -500,7 +500,7 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDC.grid(row=2, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonCE = Button(frameButtons, text="Create Exam", command=lambda: controller.show_frame(CreateExam),
+        buttonCE = Button(frameButtons, text="Create Exam", command=self.createExam,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonCE.grid(row=4, column=1, columnspan=3, padx=10, pady=40)
 
@@ -535,6 +535,10 @@ class TeacherMainPage(tk.Frame):
         # canvas.configure(xscrollcommand=scroll.set)
         # canvas.pack(side=LEFT)
 
+    def createExam(self):
+        self.controller.get_frame(CreateExam).examIDCon()
+        self.controller.show_frame(CreateExam)
+
     def courses(self):
         global coursesofTeacher
         coursesofTeacher = self.getCourseCodesOfTeacher(self.controller.shared_data["email"].get())
@@ -563,7 +567,7 @@ class TeacherMainPage(tk.Frame):
             self.buttonDetail.place(x=75, y=250)
 
             self.buttonExams = Button(self.frameCourse, text="Exams", width=13, bg="#ca3e47", fg="#FFFFFF",
-                                       command=lambda courseID=course[0]: self.openExamDetail(courseID))
+                                      command=lambda courseID=course[0]: self.openExamDetail(courseID))
             # threading.Thread(target= , args =[]).start()
             self.buttonExams.place(x=75, y=320)
 
@@ -1149,7 +1153,7 @@ class CreateExam(tk.Frame):
 
         def refresh():
             self.courseAbbC.set("")
-            examID.set("")
+            self.examID.set("")
 
             # hour_dur.delete(0, "end")
             # hour_dur.insert(0, 0)
@@ -1169,85 +1173,85 @@ class CreateExam(tk.Frame):
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()),
+                           str(self.examID.get()),
                            str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
                            str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 1 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str("0" + hour_dur.get() + ":" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
 
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()),
+                           str(self.examID.get()),
                            str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 1:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
                            str(min_sb.get() + ":" + "0" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 1 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
                            str("0" + min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 1 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + "0" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
             elif len(str(hour_dur.get())) == 2 and len(str(min_dur.get())) == 2 and len(str(min_sb.get())) == 2 and len(
                     str(sec_hour.get())) == 2:
                 createExam(str(self.courseAbbC.get()), str(hour_dur.get() + ":" + min_dur.get()),
                            str(min_sb.get() + ":" + sec_hour.get()), str(attemptNum.get()),
-                           str(examID.get()), str(startDate.get_date()))
+                           str(self.examID.get()), str(startDate.get_date()))
 
         def createExam(courseID, duration, startTime, attempt, examType, startDates):
             dateN = startDates.split("/")
@@ -1258,8 +1262,8 @@ class CreateExam(tk.Frame):
             todayE = date.today()
             nowE = datetime.now()
 
-            examQu = db.child("exams").shallow().get()
-            if len(self.courseAbbC.get()) == 0 or len(examID.get()) == 0:
+            examQu = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+            if len(self.courseAbbC.get()) == 0 or len(self.examID.get()) == 0:
                 messagebox.showwarning("Empty Place", "Fill every part")
             elif str(hour_dur.get()) == "0" and (str(min_dur.get()) == "0" or str(min_dur.get()) == "00"):
                 messagebox.showwarning("Duration 0", "Set the duration")
@@ -1268,7 +1272,7 @@ class CreateExam(tk.Frame):
             else:
                 if 0 <= int(min_dur.get()) <= 59 and 0 <= int(sec_hour.get()) <= 59:
                     if year > todayE.year:
-                        if examQu.val() is None:
+                        if len(list(examQu.val())) == 0:
                             examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                         "AttemptNumbers": attempt, "ExamType": examType,
                                         "StartDate": startDates}
@@ -1278,7 +1282,7 @@ class CreateExam(tk.Frame):
                             ExamCodesArray = list(examQu.val())
                             # print(ExamCodesArray)
                             result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
-                            numOfExam = "-" + str(len(result.val()) + 1)
+                            numOfExam = "-" + str(1 + int((list(result.val().items()))[-1][0].split("-")[1]))
                             examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                         "AttemptNumbers": attempt, "ExamType": examType,
                                         "StartDate": startDates}
@@ -1289,7 +1293,7 @@ class CreateExam(tk.Frame):
                         controller.show_frame(TeacherMainPage)
                     elif year == todayE.year:
                         if day > todayE.month:
-                            if examQu.val() is None:
+                            if len(list(examQu.val())) == 0:
                                 examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                             "AttemptNumbers": attempt, "ExamType": examType,
                                             "StartDate": startDates}
@@ -1299,7 +1303,7 @@ class CreateExam(tk.Frame):
                                 ExamCodesArray = list(examQu.val())
                                 # print(ExamCodesArray)
                                 result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
-                                numOfExam = "-" + str(len(result.val()) + 1)
+                                numOfExam = "-" + str(1 + int((list(result.val().items()))[-1][0].split("-")[1]))
                                 examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                             "AttemptNumbers": attempt, "ExamType": examType,
                                             "StartDate": startDates}
@@ -1310,7 +1314,7 @@ class CreateExam(tk.Frame):
                             controller.show_frame(TeacherMainPage)
                         elif day == todayE.month:
                             if month > todayE.day:
-                                if examQu.val() is None:
+                                if len(list(examQu.val())) == 0:
                                     examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                                 "AttemptNumbers": attempt, "ExamType": examType,
                                                 "StartDate": startDates}
@@ -1320,7 +1324,7 @@ class CreateExam(tk.Frame):
                                     ExamCodesArray = list(examQu.val())
                                     # print(ExamCodesArray)
                                     result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
-                                    numOfExam = "-" + str(len(result.val()) + 1)
+                                    numOfExam = "-" + str(1 + int((list(result.val().items()))[-1][0].split("-")[1]))
                                     examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                                 "AttemptNumbers": attempt, "ExamType": examType,
                                                 "StartDate": startDates}
@@ -1331,7 +1335,7 @@ class CreateExam(tk.Frame):
                                 controller.show_frame(TeacherMainPage)
                             elif month == todayE.day:
                                 if int(min_sb.get()) > nowE.hour:
-                                    if examQu.val() is None:
+                                    if len(list(examQu.val())) == 0:
                                         examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                                     "AttemptNumbers": attempt, "ExamType": examType,
                                                     "StartDate": startDates}
@@ -1341,7 +1345,8 @@ class CreateExam(tk.Frame):
                                         ExamCodesArray = list(examQu.val())
                                         # print(ExamCodesArray)
                                         result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
-                                        numOfExam = "-" + str(len(result.val()) + 1)
+                                        numOfExam = "-" + str(
+                                            1 + int((list(result.val().items()))[-1][0].split("-")[1]))
                                         examData = {"CourseID": courseID, "Duration": duration, "StartTime": startTime,
                                                     "AttemptNumbers": attempt, "ExamType": examType,
                                                     "StartDate": startDates}
@@ -1352,7 +1357,7 @@ class CreateExam(tk.Frame):
                                     controller.show_frame(TeacherMainPage)
                                 elif int(min_sb.get()) == nowE.hour:
                                     if int(sec_hour.get()) > nowE.minute:
-                                        if examQu.val() is None:
+                                        if len(list(examQu.val())) == 0:
                                             examData = {"CourseID": courseID, "Duration": duration,
                                                         "StartTime": startTime,
                                                         "AttemptNumbers": attempt, "ExamType": examType,
@@ -1364,7 +1369,8 @@ class CreateExam(tk.Frame):
                                             # print(ExamCodesArray)
                                             result = db.child("exams").order_by_child("CourseID").equal_to(
                                                 courseID).get()
-                                            numOfExam = "-" + str(len(result.val()) + 1)
+                                            numOfExam = "-" + str(
+                                                1 + int((list(result.val().items()))[-1][0].split("-")[1]))
                                             examData = {"CourseID": courseID, "Duration": duration,
                                                         "StartTime": startTime,
                                                         "AttemptNumbers": attempt, "ExamType": examType,
@@ -1413,9 +1419,8 @@ class CreateExam(tk.Frame):
         examL = Label(secondL, text="Select Exam Type:", width=15, height=2, bg="#313131", fg="#FFFFFF")
         examL.pack(pady=10, side=LEFT, expand=True)
 
-        examID = ttk.Combobox(secondL, values=['First Midterm', 'Second Midterm', 'Third Midterm', 'Final'],
-                              state='readonly', width=20)
-        examID.pack(pady=10, side=LEFT)
+        self.examID = ttk.Combobox(secondL, state='readonly', width=20, postcommand=self.examIDCon)
+        self.examID.pack(pady=10, side=LEFT)
 
         rightL = Frame(mainFrame, height=450, width=200, bg="#414141", relief=SUNKEN)
         rightL.pack(side=RIGHT)
@@ -1490,6 +1495,29 @@ class CreateExam(tk.Frame):
 
         self.courseAbbC['values'] = result1
 
+    def filterExamType(self, courseID):
+        candidateList = ["Midterm 1", "Midterm 2", "Midterm 3", "Final", "Quiz 1", "Quiz 2", "Quiz 3", "Quiz 4",
+                         "Quiz 5"]
+        result12 = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+        if len(list(result12.val())) != 0:
+            exTypeList = list(result12.val().values())
+            currList = []
+            for a in exTypeList:
+                currList.append(a['ExamType'])
+
+            a = set(candidateList)
+            b = set(currList)
+            c = {element for element in a if element not in b}
+            Z = [x for _, x in sorted(zip(a, c))]
+            return Z
+        else:
+            return candidateList
+
+    def examIDCon(self):
+        valuesofType = self.filterExamType(str(self.courseAbbC.get()))
+        valuesofType.sort()
+        self.examID['values'] = valuesofType
+
 
 class DeleteExam(tk.Frame):
     def __init__(self, parent, controller):
@@ -1507,36 +1535,16 @@ class DeleteExam(tk.Frame):
             deleteExam(selected_exam)
 
         def deleteExam(examID):
-
+            abbExam = examID.split("/")[0]
             if not (str(self.examAbbC.get()).isspace() or len(str(self.examAbbC.get())) == 0 or str(
                     self.examAbbC.get()) == ""):
 
-                result = db.child("exams").order_by_child("CourseID").equal_to(examID).get()
-                result1 = list(result.val())
-                # print(result1)
-
-                # Get current courses
-                examQu = db.child("exams").shallow().get()
-                examCodesArray = list(examQu.val())
-                # print(examCodesArray)
-
-                courseCode, examIndex = examID.split("-")
-                examIndex = int(examIndex)
-                # print(courseCode)
-                # print(examIndex)
-                result = db.child("exams").order_by_child("CourseID").equal_to(courseCode).get()
-                numOfExam = (len(result.val()))
-                # print(numOfExam)
-
-                if examIndex != numOfExam:
-                    messagebox.showerror("Wrong Execution", "Cannot delete the exam because of the exam sequence.")
-                else:
-                    db.child("exams").child(examID).remove()
-                    messagebox.showinfo("Exam Deleted", "Exam deleted")
-                    self.courseAbbC.set("")
-                    self.examAbbC.set("")
-                    controller.get_frame(TeacherMainPage).courses()
-                    controller.show_frame(TeacherMainPage)
+                db.child("exams").child(abbExam).remove()
+                messagebox.showinfo("Exam Deleted", "Exam deleted")
+                self.courseAbbC.set("")
+                self.examAbbC.set("")
+                controller.get_frame(TeacherMainPage).courses()
+                controller.show_frame(TeacherMainPage)
             else:
                 messagebox.showerror("Blank Spaces", "Select exam")
 
@@ -1574,10 +1582,15 @@ class DeleteExam(tk.Frame):
         self.courseAbbC['values'] = result1
 
     def addExams(self):
-        examResult = db.child("exams").order_by_child("CourseID").equal_to(str(self.courseAbbC.get())).get()
-        examResultList = list(examResult.val())
+        examsResult = db.child("exams").order_by_child("CourseID").equal_to(str(self.courseAbbC.get())).get()
+        tempList = []
+        for a in examsResult:
+            # print(a.key())
+            # print(a.val())
+            name = str(a.key()) + "/" + str(a.val()["ExamType"])
+            tempList.append(name)
 
-        self.examAbbC['values'] = examResultList
+        self.examAbbC['values'] = tempList
 
 
 class CourseDetailPage(tk.Frame):
@@ -1884,20 +1897,20 @@ class ExamDetailPage(tk.Frame):
         labelExamName = Label(frameLeft, height=2, width=15, bg="#313131", textvariable=examAttempt, fg="#FFFFFF")
         labelExamName.place(x=185, y=350)
 
-        frameRight = Frame(frameCenter, height=470, width=725, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameRight.pack(side=LEFT, fill=X)
+        self.frameRight = Frame(frameCenter, height=470, width=725, bg="#414141", borderwidth=2, relief=SUNKEN)
+        self.frameRight.pack(side=LEFT, fill=X)
 
-        examDateL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Date:", fg="#FFFFFF")
+        examDateL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Date:", fg="#FFFFFF")
         examDateL.place(x=30, y=30)
 
         today = date.today()
         now = datetime.now()
 
-        self.startDateE = Calendar(frameRight, selectmode='day', year=today.year, month=today.month, day=today.day,
+        self.startDateE = Calendar(self.frameRight, selectmode='day', year=today.year, month=today.month, day=today.day,
                                    date_pattern='dd/mm/yy')
         self.startDateE.place(x=30, y=100)
 
-        examTimeL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Time:", fg="#FFFFFF")
+        examTimeL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Time:", fg="#FFFFFF")
         examTimeL.place(x=350, y=30)
 
         self.hour_string_time = StringVar()
@@ -1910,36 +1923,37 @@ class ExamDetailPage(tk.Frame):
 
         f = ('Times', 20)
 
-        self.examTimeHour = Spinbox(frameRight, from_=8, to=23, wrap=True, textvariable=self.hour_string_time, width=2,
+        self.examTimeHour = Spinbox(self.frameRight, from_=8, to=23, wrap=True, textvariable=self.hour_string_time, width=2,
                                     state="readonly",
                                     font=f, justify=CENTER)
-        self.examTimeMinutes = Spinbox(frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_time, font=f,
+        self.examTimeMinutes = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_time, font=f,
                                        width=2,
                                        justify=CENTER)
 
-        self.examDurHour = Spinbox(frameRight, from_=0, to=9, wrap=True, textvariable=self.hour_string_dur, width=2,
+        self.examDurHour = Spinbox(self.frameRight, from_=0, to=9, wrap=True, textvariable=self.hour_string_dur, width=2,
                                    state="readonly",
                                    font=f, justify=CENTER)
-        self.examDurMin = Spinbox(frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_dur, font=f,
+        self.examDurMin = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_dur, font=f,
                                   width=2, justify=CENTER)
 
         self.examTimeHour.place(x=350, y=100)
         self.examTimeMinutes.place(x=400, y=100)
 
-        examDurL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Duration:", fg="#FFFFFF")
+        examDurL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Duration:", fg="#FFFFFF")
         examDurL.place(x=30, y=300)
 
         self.examDurHour.place(x=30, y=370)
         self.examDurMin.place(x=80, y=370)
 
-        examAtL = Label(frameRight, width=20, height=3, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF")
+        examAtL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF")
         examAtL.place(x=350, y=300)
 
-        self.examAttemptNum = Spinbox(frameRight, from_=1, to=10, wrap=True, width=2, state="readonly",
+        self.examAttemptNum = Spinbox(self.frameRight, from_=1, to=10, wrap=True, width=2, state="readonly",
                                       textvariable=self.attemptNum, font=f, justify=CENTER)
         self.examAttemptNum.place(x=350, y=370)
 
-        buttonUpdate = Button(frameRight, text="Update", width=13, bg="#ca3e47", fg="#FFFFFF", command=self.checkPassed)
+        buttonUpdate = Button(self.frameRight, text="Update", width=13, bg="#ca3e47", fg="#FFFFFF",
+                              command=self.checkPassed)
         buttonUpdate.place(x=550, y=200)
 
     def examCon(self):
@@ -1994,27 +2008,27 @@ class ExamDetailPage(tk.Frame):
         minute = now.minute
 
         if yearExam < today.year:
-            messagebox.showerror("Exam Started", "Exam started")
+            messagebox.showerror("Exam Time Passed", "Exam cannot be updated after the start time")
         elif yearExam > today.year:
             self.updateExam()
         else:
             if monthExam < today.month:
-                messagebox.showerror("Exam Started", "Exam started")
+                messagebox.showerror("Exam Time Passed", "Exam cannot be updated after the start time")
             elif monthExam > today.month:
                 self.updateExam()
             else:
                 if dayExam < today.day:
-                    messagebox.showerror("Exam Started", "Exam started")
+                    messagebox.showerror("Exam Time Passed", "Exam cannot be updated after the start time")
                 elif dayExam > today.day:
                     self.updateExam()
                 else:
                     if int(hourExam) < hour:
-                        messagebox.showerror("Exam Started", "Exam started")
+                        messagebox.showerror("Exam Time Passed", "Exam cannot be updated after the start time")
                     elif int(hourExam) > hour:
                         self.updateExam()
                     else:
                         if int(minExam) <= minute:
-                            messagebox.showerror("Exam Started", "Exam started")
+                            messagebox.showerror("Exam Time Passed", "Exam cannot be updated after the start time")
                         else:
                             self.updateExam()
 
@@ -2118,7 +2132,6 @@ class ExamDetailPage(tk.Frame):
                                    str(self.examTimeHour.get() + ":" + self.examTimeMinutes.get()))
 
     def updateExamDetails(self, examID, attempt, duration, startdate, starttime):
-
         dateExam = startdate.split("/")
         year = int("20" + dateExam[2])
         month = int(dateExam[0])
@@ -2282,15 +2295,19 @@ class TeacherCoursePage(tk.Frame):
                 self.labelExamName.place(x=25, y=10)
 
                 self.labelExamType = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[4], fg="#FFFFFF")
-                self.labelExamType.place(x=25, y=60)
+                self.labelExamType.place(x=25, y=55)
 
                 self.labelExamDate = Label(self.frameExam, height=2, width=28, bg="#313131",
                                            text=str(exam[5] + " " + exam[6]), fg="#FFFFFF")
-                self.labelExamDate.place(x=25, y=110)
+                self.labelExamDate.place(x=25, y=100)
 
-                self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
-                                         command=lambda examID=exam[0]: self.openExamDetail(examID))
-                self.buttonExam.place(x=75, y=160)
+                self.labelAttNum = Label(self.frameExam, height=2, width=28, bg="#313131",
+                                           text=str("Attempt:" + exam[1]), fg="#FFFFFF")
+                self.labelAttNum.place(x=25, y=145)
+
+                # self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                # command=lambda examID=exam[0]: self.openExamDetail(examID))
+                # self.buttonExam.place(x=75, y=160)
 
             else:
                 futureExamsCount += 1
@@ -2378,7 +2395,6 @@ class TeacherCoursePage(tk.Frame):
                 examArray.append(exam.val()["StartTime"])
                 examsArrays.append(examArray)
         return examsArrays
-
 
 
 # STUDENT PAGES
@@ -2787,9 +2803,9 @@ class CoursePageS(tk.Frame):
                                            text=str(exam[5] + " " + exam[6]), fg="#FFFFFF")
                 self.labelExamDate.place(x=25, y=110)
 
-                self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
-                                         command=lambda examID=exam[0]: self.openExamDetail(examID))
-                self.buttonExam.place(x=75, y=160)
+                # self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                # command=lambda examID=exam[0]: self.openExamDetail(examID))
+                # self.buttonExam.place(x=75, y=160)
 
             else:
                 futureExamsCount += 1
@@ -2871,7 +2887,6 @@ class ExamPageS(tk.Frame):
             global ExitButtonState
             ExitButtonState = True
             controller.get_frame(StudentMainPage).coursesS()
-            controller.get_frame(StudentMainPage).examsS()
             controller.show_frame(StudentMainPage)
 
         buttonStart = Button(self, text="Start Exam", command=self.exam, fg="white",
