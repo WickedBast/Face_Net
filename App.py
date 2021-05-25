@@ -7,6 +7,7 @@ from tkcalendar import Calendar
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from gaze_tracking import GazeTracking
 import pyrebase
 import cv2
 from pathlib import Path
@@ -19,6 +20,7 @@ import pandas as pd
 import numpy as np
 import requests
 from threading import *
+import time
 import threading
 import webbrowser
 from PIL import ImageTk, Image
@@ -67,7 +69,7 @@ class FaceNet(tk.Tk):
 
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
-                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage, ChangeCredentials,
+                CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage,
                 ExamDetailStudent, ExamPageS, CoursePageS, TeacherCoursePage):
             frame = F(container, self)
 
@@ -123,6 +125,8 @@ class Login(tk.Frame):
                     messagebox.showerror("Information Credentials", "Your email or password is wrong")
                 except RefreshError:
                     messagebox.showerror("Check Date and Time", "Check your PC's date and time")
+                except:
+                    messagebox.showerror("Information Credentials", "Your email or password is wrong")
 
         def refresh():
             email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
@@ -629,12 +633,13 @@ class StudentMainPage(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        # image = Image.open("images/rocket.png")
-        # image = image.resize((30, 30))
-        # img = ImageTk.PhotoImage(image)
+        image = Image.open("images/rocket.png")
+        image = image.resize((30, 30))
+        img = ImageTk.PhotoImage(image)
 
-        # logoLabel = Label(frameHeader, image=img)
-        # logoLabel.pack(side=LEFT)
+        logoLabel = Label(frameHeader, image=img)
+        logoLabel.image = img
+        logoLabel.pack(side=LEFT)
 
         logoutButton = Button(frameHeader, text="Logout", command=lambda: controller.show_frame(Login), width=10,
                               bg="#ca3e47", fg="#FFFFFF")
@@ -662,8 +667,7 @@ class StudentMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonCP.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonCC = Button(frameButtons, text="Change Credentials",
-                          command=lambda: controller.show_frame(ChangeCredentials),
+        buttonCC = Button(frameButtons, text="Change Password", command=self.changePass,
                           width=15, bg="#ca3e47", fg="#FFFFFF")
         buttonCC.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
 
@@ -963,6 +967,11 @@ class StudentMainPage(tk.Frame):
             encodeList.append(encode)
         return encodeList
 
+    def changePass(self):
+        auth1.send_password_reset_email(self.controller.shared_data["email"].get())
+        messagebox.showinfo("Email Send", "An email has been send to your email")
+        self.controller.get_frame(StudentMainPage).coursesS()
+
 
 # TEACHER PAGES
 
@@ -1090,6 +1099,7 @@ class CreateCourse(tk.Frame):
 
 
 class DeleteCourse(tk.Frame):
+    # TODO: ASK IF THERE IS EXAMS
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
@@ -1712,15 +1722,12 @@ class CourseDetailPage(tk.Frame):
         # studentListL.place(x=0, y=0)
         studentListL.pack(side=TOP)
 
-        im_checked = ImageTk.PhotoImage(Image.open("checked.png"))
-        im_unchecked = ImageTk.PhotoImage(Image.open("unchecked.png"))
-
         self.trv = ttk.Treeview(frameLeft, columns=(1, 2, 3), height=10)
         style = ttk.Style(self.trv)
         style.configure('Treeview', rowheight=30)
 
-        self.trv.tag_configure('checked', image=im_checked)
-        self.trv.tag_configure('unchecked', image=im_unchecked)
+        self.trv.tag_configure('checked')
+        self.trv.tag_configure('unchecked')
 
         self.trv.heading('#0', text="")
         self.trv.column("#0", minwidth=0, width=50)
@@ -1923,14 +1930,17 @@ class ExamDetailPage(tk.Frame):
 
         f = ('Times', 20)
 
-        self.examTimeHour = Spinbox(self.frameRight, from_=8, to=23, wrap=True, textvariable=self.hour_string_time, width=2,
+        self.examTimeHour = Spinbox(self.frameRight, from_=8, to=23, wrap=True, textvariable=self.hour_string_time,
+                                    width=2,
                                     state="readonly",
                                     font=f, justify=CENTER)
-        self.examTimeMinutes = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_time, font=f,
+        self.examTimeMinutes = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_time,
+                                       font=f,
                                        width=2,
                                        justify=CENTER)
 
-        self.examDurHour = Spinbox(self.frameRight, from_=0, to=9, wrap=True, textvariable=self.hour_string_dur, width=2,
+        self.examDurHour = Spinbox(self.frameRight, from_=0, to=9, wrap=True, textvariable=self.hour_string_dur,
+                                   width=2,
                                    state="readonly",
                                    font=f, justify=CENTER)
         self.examDurMin = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_dur, font=f,
@@ -2302,7 +2312,7 @@ class TeacherCoursePage(tk.Frame):
                 self.labelExamDate.place(x=25, y=100)
 
                 self.labelAttNum = Label(self.frameExam, height=2, width=28, bg="#313131",
-                                           text=str("Attempt:" + exam[1]), fg="#FFFFFF")
+                                         text=str("Attempt:" + exam[1]), fg="#FFFFFF")
                 self.labelAttNum.place(x=25, y=145)
 
                 # self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
@@ -2398,63 +2408,6 @@ class TeacherCoursePage(tk.Frame):
 
 
 # STUDENT PAGES
-
-
-class ChangeCredentials(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg="#414141")
-        self.controller = controller
-
-        def refresh():
-            self.name.bind("<FocusIn>", lambda args: self.name.delete(0, 'end'))
-            self.surname.bind("<FocusIn>", lambda args: self.surname.delete(0, 'end'))
-
-        def back():
-            self.name.delete(0, 'end')
-            self.name.insert(0, "Name")
-            self.surname.delete(0, 'end')
-            self.surname.insert(0, "Surname")
-            controller.get_frame(StudentMainPage).coursesS()
-            controller.show_frame(StudentMainPage)
-
-        welcome = Label(self, text=" CHANGE PASSWORD ", width=150, height=5, bg="#414141", fg="#FFFFFF")
-        welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
-
-        self.name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        self.name.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
-        self.name.insert(0, "Name")
-
-        self.surname = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        self.surname.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
-        self.surname.insert(0, "Surname")
-
-        refresh()
-
-        buttonPass = Button(self, text="Change Password", command=self.updatePassword, fg="white", bg="#ca3e47",
-                            width=15)
-        buttonPass.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
-
-        buttonBack = Button(self, text="Back", command=back, bg="#fed049", width=10)
-        buttonBack.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
-
-        buttonAction = Button(self, text="Submit", command=self.updateChanges, fg="white", bg="#ca3e47", width=10)
-        buttonAction.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
-
-    def updateChanges(self):
-        if str(self.name.get()).isspace() or str(self.surname.get()).isspace():
-            messagebox.showerror("Blank spaces", "Please fill the blank areas.")
-        elif len(str(self.name.get())) == 0 or len(str(self.surname.get())) == 0:
-            messagebox.showerror("Blank spaces", "Please fill the blank areas.")
-        elif not str(self.name.get()).isalpha() or not str(self.surname.get()).isalpha():
-            messagebox.showerror("Wrong Input", "Your name or surname typed wrong.")
-        else:
-            messagebox.showinfo("Changes Saved", "Your profile is updated")
-            self.controller.show_frame(StudentMainPage)
-
-    def updatePassword(self):
-        auth1.send_password_reset_email(self.controller.shared_data["email"].get())
-        messagebox.showinfo("Email Send", "An email has been send to your email")
-        self.controller.show_frame(StudentMainPage)
 
 
 class ExamDetailStudent(tk.Frame):
@@ -2931,6 +2884,7 @@ class ExamPageS(tk.Frame):
         print(startTime)
         print(startTime + timedelta(minutes=6))
         print(type(startTime))
+        gaze = GazeTracking()
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
         # create a array for check times and check status.
@@ -2942,6 +2896,9 @@ class ExamPageS(tk.Frame):
         tempDelta1 = timedelta(minutes=lenInMin)
         endTime = startTime + tempDelta1
         print(endTime, "!!")
+
+        t3 = Thread(target=self.captureVid2, args=[cap, endTime])
+        t3.start()
 
         for i in range(0, 9):
             tempDelta = timedelta(minutes=(i + 1) * lenInMin / 10)
@@ -2965,10 +2922,14 @@ class ExamPageS(tk.Frame):
         print(frCheckTimes)
         resultOnGoing = db.child(examID).child(studentID).child("FrChecks").get()
 
+        t3 = Thread(target=self.captureEyeGaze, args=[cap, gaze, endTime])
+        t4 = Thread(target=self.checkEyeGaze, args=[gaze, endTime])
+
+        t3.start()
+        t4.start()
+
         while True:
             success, img = cap.read()
-            imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
-            imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
             datetime_Now = datetime.now(tz_IN)
             # print("Real time:", datetime_Now.strftime("%H:%M:%S"))
             # print(type(datetime_Now))
@@ -2979,6 +2940,7 @@ class ExamPageS(tk.Frame):
             if ExitButtonState:
                 break
             # Thread that checks if there are two or more faces in the img
+
             t2 = Thread(target=self.work2, args=[img, studentID, examID])
             t2.start()
             t2.join()
@@ -3007,6 +2969,31 @@ class ExamPageS(tk.Frame):
 
         cap.release()
         cv2.destroyAllWindows()
+        time.sleep(10)
+
+        resultVidRec = db.child("examEnroll").child(examID).child(studentID).child("VidRec").get()
+        if resultVidRec.val() is None:
+            parent = Path(__file__).parent
+            VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
+            path_on_cloudFürVid = examID + "/" + studentID + "/" + "Rec-1"
+            storage.child(path_on_cloudFürVid).put(VidPath)
+
+            data1 = {"PathToVid": path_on_cloudFürVid}
+            db.child("examEnroll").child(examID).child(studentID).child("VidRec").child("Rec-1").set(data1)
+        else:
+            numOfRec = 1 + len(list(resultVidRec.val()))
+            parent = Path(__file__).parent
+            VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
+            path_on_cloudFürVid = examID + "/" + studentID + "/" + "Rec-" + str(numOfRec)
+            storage.child(path_on_cloudFürVid).put(VidPath)
+
+            data1 = {"PathToVid": path_on_cloudFürVid}
+            db.child("examEnroll").child(examID).child(studentID).child("VidRec").child("Rec-" + str(numOfRec)).set(
+                data1)
+
+        messagebox.showinfo("Exam Over", "Exam Over")
+        self.controller.get_frame(StudentMainPage).coursesS()
+        self.controller.show_frame(StudentMainPage)
 
     def work(self, cap, faceEncoding, studentID, examID):
         print("sleep time start")
@@ -3024,7 +3011,7 @@ class ExamPageS(tk.Frame):
             if countOfSucces == 5:
                 successState = True
                 break
-            if tryCount == 100:
+            if tryCount == 50:
                 print("Recog failed and reported.")
                 break
             imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
@@ -3035,10 +3022,10 @@ class ExamPageS(tk.Frame):
             # print(facesCurFrame)
             encodesCurFrame = face_recognition.face_encodings(imgSmall, facesCurFrame)
             # print(encodesCurFrame)
-            if (len(encodesCurFrame) == 1):
+            if len(encodesCurFrame) == 1:
                 matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
                 print(matches[0])
-                if (matches[0]):
+                if matches[0]:
                     successImg = img
                     countOfSucces = countOfSucces + 1
                     tryCount = tryCount + 1
@@ -3050,7 +3037,7 @@ class ExamPageS(tk.Frame):
                 tryCount = tryCount + 1
 
         resultForFR = db.child("examEnroll").child(examID).child(studentID).child("FrChecks").get()
-        if (resultForFR.val() is None):
+        if resultForFR.val() is None:
             parent = Path(__file__).parent
             registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
             if successState:
@@ -3176,6 +3163,77 @@ class ExamPageS(tk.Frame):
 
         else:
             print("Time constarint is not fulfilled")
+
+    def captureVid2(self, cap, endTime):
+        # cap = cv2.VideoCapture(0)
+        parent = Path(__file__).parent
+        VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
+        vid_cod = cv2.VideoWriter_fourcc(*'FMP4')
+        output = cv2.VideoWriter(VidPath, vid_cod, 3.0, (640, 480))
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        while True:
+            success, img = cap.read()
+            # cv2.waitKey(1)
+            output.write(img)
+            datetime_Now = datetime.now(tz_IN)
+            if (datetime_Now - endTime).days == 0:
+                print("EXAM OVER")
+                break
+            if ExitButtonState:
+                break
+        cap.release()
+        # close the already opened file
+        output.release()
+
+    def captureEyeGaze(self, cap, gaze, endTime):
+
+        while True:
+            tz_IN = pytz.timezone('Etc/GMT-3')
+            datetime_Now = datetime.now(tz_IN)
+            # We get a new frame from the webcam
+            _, frame = cap.read()
+
+            # We send this frame to GazeTracking to analyze it
+            gaze.refresh(frame)
+
+            if (datetime_Now - endTime).days == 0:
+                print("EXAM OVER")
+                break
+            if ExitButtonState:
+                break
+
+    def checkEyeGaze(self, gaze, endTime):
+        count = 1
+        while True:
+            tz_IN = pytz.timezone('Etc/GMT-3')
+            datetime_Now = datetime.now(tz_IN)
+            # success, image = webcam.read()
+            try:
+                left_pupil = gaze.pupil_left_coords()
+                if str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
+                    timeS = datetime.now()
+
+                    while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
+                        timeE = datetime.now()
+                        if (timeE - timeS).seconds > 10:
+                            while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
+                                gaze.is_top()
+                            timeD = datetime.now()
+                            print("Alert " + str(count) + " took " + str((timeD - timeS).seconds) + " seconds")
+                            print("Started: " + str(timeS.time()) + " Ended: " + str(timeD.time()))
+                            count += 1
+                            # parent = Path(__file__).parent
+                            # registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
+                            # cv2.imwrite(registerPic, image)
+                            break
+            except:
+                continue
+
+            if (datetime_Now - endTime).days == 0:
+                print("EXAM OVER")
+                break
+            if ExitButtonState:
+                break
 
 
 # MAIN METHOD
