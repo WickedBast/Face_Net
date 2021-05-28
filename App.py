@@ -21,6 +21,7 @@ import numpy as np
 import requests
 from threading import *
 import time
+from firebase_admin import storage as admin_storage
 import threading
 import webbrowser
 from PIL import ImageTk, Image
@@ -37,8 +38,8 @@ firebaseConfig = {
 }
 
 cred = credentials.Certificate('firebase-admin-sdk.json')
-admin = firebase_admin.initialize_app(cred, {"databaseURL": "https://facenet-f0615-default-rtdb.firebaseio.com/"})
-
+admin = firebase_admin.initialize_app(cred, {"databaseURL": "https://facenet-f0615-default-rtdb.firebaseio.com/",
+                                             "storageBucket": "facenet-f0615.appspot.com"})
 firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 auth1 = firebase.auth()
@@ -968,8 +969,15 @@ class StudentMainPage(tk.Frame):
         return encodeList
 
     def changePass(self):
-        auth1.send_password_reset_email(self.controller.shared_data["email"].get())
-        messagebox.showinfo("Email Send", "An email has been send to your email")
+        if messagebox.askyesno("Confirm Changing Password?", "Are you sure you want to change your password?"):
+            try:
+                auth1.send_password_reset_email(self.controller.shared_data["email"].get())
+                messagebox.showinfo("Email Sent", "An email has been send to your email")
+            except:
+                messagebox.showerror("Email Didn't Send", "Something wrong with the system!")
+        else:
+            return True
+
         self.controller.get_frame(StudentMainPage).coursesS()
 
 
@@ -1548,7 +1556,7 @@ class DeleteExam(tk.Frame):
             abbExam = examID.split("/")[0]
             if not (str(self.examAbbC.get()).isspace() or len(str(self.examAbbC.get())) == 0 or str(
                     self.examAbbC.get()) == ""):
-
+                self.deleteExamDataOfAllStudents(abbExam)
                 db.child("exams").child(abbExam).remove()
                 messagebox.showinfo("Exam Deleted", "Exam deleted")
                 self.courseAbbC.set("")
@@ -1601,6 +1609,56 @@ class DeleteExam(tk.Frame):
             tempList.append(name)
 
         self.examAbbC['values'] = tempList
+
+    def deleteExamDataOfStudent(self, examID, studentID):
+        bucket = admin_storage.bucket()
+        result = db.child("examEnroll").child(examID).child(studentID).get()
+        # print(result.val())
+        for a in result:
+            # part for attempts
+            if a.key() == "Attempts":
+                # print(a.val())
+                # print(a.val()["Attempt-1"])
+                for b in a.val():
+                    # print(b)
+                    # print(a.val()[b]["PathToImg"])
+                    blob = bucket.blob(a.val()[b]["PathToImg"])
+                    blob.delete()
+            # part for FrChecks
+            elif a.key() == "FrChecks":
+                # print(a.val())
+
+                for b in a.val():
+                    # print(b)
+                    # print(a.val()[b]["PathToImg"])
+                    if (a.val()[b]["PathToImg"] != ""):
+                        blob = bucket.blob(a.val()[b]["PathToImg"])
+                        blob.delete()
+            # part for Solditute
+            elif a.key() == "Solditute":
+                # print(a.val())
+                # print(a.val()["Attempt-1"])
+                for b in a.val():
+                    # print(b)
+                    # print(a.val()[b]["PathToImg"])
+                    blob = bucket.blob(a.val()[b]["PathToImg"])
+                    blob.delete()
+            elif a.key() == "VidRec":
+                # print(a.val())
+                # print(a.val()["Attempt-1"])
+                for b in a.val():
+                    # print(b)
+                    # print(a.val()[b]["PathToImg"])
+                    blob = bucket.blob(a.val()[b]["PathToVid"])
+                    blob.delete()
+
+    def deleteExamDataOfAllStudents(self, examID):
+        result = db.child("examEnroll").child(examID).get()
+
+        for student in result:
+            # print(student.key())
+            self.deleteExamDataOfStudent(examID, student.key())
+        db.child("examEnroll").child(examID).remove()
 
 
 class CourseDetailPage(tk.Frame):
@@ -2881,9 +2939,9 @@ class ExamPageS(tk.Frame):
         startTime = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
                              int(splitArrTime[0]), int(splitArrTime[1]))
         startTime = startTime.replace(tzinfo=tz_IN)
-        print(startTime)
-        print(startTime + timedelta(minutes=6))
-        print(type(startTime))
+        # print(startTime)
+        # print(startTime + timedelta(minutes=6))
+        # print(type(startTime))
         gaze = GazeTracking()
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
@@ -2895,7 +2953,7 @@ class ExamPageS(tk.Frame):
 
         tempDelta1 = timedelta(minutes=lenInMin)
         endTime = startTime + tempDelta1
-        print(endTime, "!!")
+        # print(endTime, "!!")
 
         t3 = Thread(target=self.captureVid2, args=[cap, endTime])
         t3.start()
@@ -2905,11 +2963,11 @@ class ExamPageS(tk.Frame):
             print((startTime + tempDelta).time())
             frCheckTimes.append([(startTime + tempDelta), False])
 
-        print(frCheckTimes)
+        # print(frCheckTimes)
         datetime_NowArr = datetime.now(tz_IN)
         indexForFR = 1
         for a in frCheckTimes:
-            print(indexForFR)
+            # print(indexForFR)
             if (datetime_NowArr - a[0]) > timedelta(minutes=1):
                 a[1] = True
                 if (db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child(
@@ -2919,7 +2977,7 @@ class ExamPageS(tk.Frame):
                         "FR-" + str(indexForFR)).set(data1)
             indexForFR = indexForFR + 1
 
-        print(frCheckTimes)
+        # print(frCheckTimes)
         resultOnGoing = db.child(examID).child(studentID).child("FrChecks").get()
 
         t3 = Thread(target=self.captureEyeGaze, args=[cap, gaze, endTime])
@@ -2935,7 +2993,7 @@ class ExamPageS(tk.Frame):
             # print(type(datetime_Now))
             # print("-----------------------------------------------")
             if (datetime_Now - endTime).days == 0:
-                print("EXAM OVER")
+                # print("EXAM OVER")
                 break
             if ExitButtonState:
                 break
@@ -2952,12 +3010,12 @@ class ExamPageS(tk.Frame):
                 # print((datetime_Now-a[0])>timedelta(minutes=1))
                 # print()
                 if (datetime_Now - a[0]).days == 0 and a[1] == False:
-                    print("Starting FR for", a[0], " Time is:", datetime_Now)
+                    # print("Starting FR for", a[0], " Time is:", datetime_Now)
                     t1 = Thread(target=self.work, args=[cap, faceEncoding, studentID, examID])
                     t1.start()
                     # t1.join()
                     a[1] = True
-                    print(frCheckTimes)
+                    # print(frCheckTimes)
 
             # print((frCheckTimes))
 
@@ -2996,7 +3054,7 @@ class ExamPageS(tk.Frame):
         self.controller.show_frame(StudentMainPage)
 
     def work(self, cap, faceEncoding, studentID, examID):
-        print("sleep time start")
+        # print("sleep time start")
         successState = False
         successImg = None
         nonsuccessImg = None
@@ -3006,13 +3064,13 @@ class ExamPageS(tk.Frame):
         while True:
             success, img = cap.read()
             if not success:
-                print("failed to grab frame")
+                # print("failed to grab frame")
                 break
             if countOfSucces == 5:
                 successState = True
                 break
             if tryCount == 50:
-                print("Recog failed and reported.")
+                # print("Recog failed and reported.")
                 break
             imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
             imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
@@ -3024,7 +3082,7 @@ class ExamPageS(tk.Frame):
             # print(encodesCurFrame)
             if len(encodesCurFrame) == 1:
                 matches = face_recognition.compare_faces(faceEncoding, encodesCurFrame, 0.56)
-                print(matches[0])
+                # print(matches[0])
                 if matches[0]:
                     successImg = img
                     countOfSucces = countOfSucces + 1
@@ -3076,7 +3134,7 @@ class ExamPageS(tk.Frame):
         # print(registerPic)
         # cv2.imwrite(registerPic, img)
 
-        print("sleep time stop")
+        # print("sleep time stop")
 
     def work2(self, img, studentID, examID):
         # imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
@@ -3084,28 +3142,28 @@ class ExamPageS(tk.Frame):
         tz_IN = pytz.timezone('Etc/GMT-3')
         datetime_Now = datetime.now(tz_IN)
         global lastTimeSolErrOcc
-        print(lastTimeSolErrOcc, "!!!!!")
+        # print(lastTimeSolErrOcc, "!!!!!")
 
         facesCurFrame = face_recognition.face_locations(img)
         # print(len(facesCurFrame))
         # print(facesCurFrame)
         # encodesCurFrame = face_recognition.face_encodings(img, facesCurFrame)
         # print(encodesCurFrame)
-        print(len(facesCurFrame))
+        # print(len(facesCurFrame))
 
-        if (lastTimeSolErrOcc == 0):
-            print("Time constraint 1 is ok entering the if")
-            if (len(facesCurFrame) > 1):
+        if lastTimeSolErrOcc == 0:
+            # print("Time constraint 1 is ok entering the if")
+            if len(facesCurFrame) > 1:
                 resultExamSol = db.child("examEnroll").child(examID).child(studentID).child("Solditute").get()
-                if (resultExamSol.val() is None):
-                    print("THERE ARE 2 PEOPLE IN THE IMAGE")
+                if resultExamSol.val() is None:
+                    # print("THERE ARE 2 PEOPLE IN THE IMAGE")
                     lastTimeSolErrOcc = datetime_Now
                     parent = Path(__file__).parent
                     registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
                     cv2.imwrite(registerPic, img)
                     path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-1"
                     storage.child(path_on_cloud).put(registerPic)
-                    print("Sent IMG FIRST WAY")
+                    # print("Sent IMG FIRST WAY")
 
                     data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                     db.child("examEnroll").child(examID).child(studentID).child("Solditute").child("Violation-1").set(
@@ -3127,20 +3185,20 @@ class ExamPageS(tk.Frame):
 
 
         elif (datetime_Now - lastTimeSolErrOcc) > timedelta(minutes=0.5):
-            print("Time constraint 2 is ok entering the if")
-            if (len(facesCurFrame) > 1):
+            # print("Time constraint 2 is ok entering the if")
+            if len(facesCurFrame) > 1:
                 resultExamSol = db.child("examEnroll").child(examID).child(studentID).child("Solditute").get()
-                if (resultExamSol.val() is None):
+                if resultExamSol.val() is None:
                     lastTimeSolErrOcc = datetime_Now
-                    print("THERE ARE 2 PEOPLE IN THE IMAGE")
+                    # print("THERE ARE 2 PEOPLE IN THE IMAGE")
                     parent = Path(__file__).parent
                     registerPic = Path(parent, 'Temp', 'SecPeop.png').__str__()
                     cv2.imwrite(registerPic, img)
                     path_on_cloud = examID + "/" + studentID + "/" + "Solditute" + "/" + "Violation-1"
                     storage.child(path_on_cloud).put(registerPic)
-                    print("Sent IMG SECOND WAY")
-                    print(resultExamSol.val())
-                    print("*****************************")
+                    # print("Sent IMG SECOND WAY")
+                    # print(resultExamSol.val())
+                    # print("*****************************")
 
                     data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                     db.child("examEnroll").child(examID).child(studentID).child("Solditute").child("Violation-1").set(
@@ -3177,7 +3235,7 @@ class ExamPageS(tk.Frame):
             output.write(img)
             datetime_Now = datetime.now(tz_IN)
             if (datetime_Now - endTime).days == 0:
-                print("EXAM OVER")
+                # print("EXAM OVER")
                 break
             if ExitButtonState:
                 break
@@ -3197,7 +3255,7 @@ class ExamPageS(tk.Frame):
             gaze.refresh(frame)
 
             if (datetime_Now - endTime).days == 0:
-                print("EXAM OVER")
+                # print("EXAM OVER")
                 break
             if ExitButtonState:
                 break
@@ -3230,7 +3288,7 @@ class ExamPageS(tk.Frame):
                 continue
 
             if (datetime_Now - endTime).days == 0:
-                print("EXAM OVER")
+                # print("EXAM OVER")
                 break
             if ExitButtonState:
                 break
