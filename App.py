@@ -71,7 +71,7 @@ class FaceNet(tk.Tk):
         for F in (
                 Login, StudentRegister, TeacherRegister, ForgotPassword, TeacherMainPage, StudentMainPage,
                 CreateCourse, DeleteCourse, CreateExam, DeleteExam, CourseDetailPage, ExamDetailPage,
-                ExamDetailStudent, ExamPageS, CoursePageS, TeacherCoursePage):
+                ExamDetailStudent, ExamPageS, CoursePageS, TeacherCoursePage, ExamReports):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -513,7 +513,8 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDE.grid(row=6, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonER = Button(frameButtons, text="Exam Reports", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonER = Button(frameButtons, text="Exam Reports", command=lambda: controller.show_frame(ExamReports),
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonER.grid(row=8, column=1, columnspan=3, padx=10, pady=40)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
@@ -1107,7 +1108,6 @@ class CreateCourse(tk.Frame):
 
 
 class DeleteCourse(tk.Frame):
-    # TODO: ASK IF THERE IS EXAMS
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
@@ -1125,10 +1125,18 @@ class DeleteCourse(tk.Frame):
             courseQu = db.child("courses").shallow().get()
             courseCodesArray = list(courseQu.val())
             # print(courseCodesArray)
-            db.child("courses").child(courseID).remove()
-            db.child("coursesENROLL").child(courseID).remove()
-            self.courseAbbC.set("")
-            messagebox.showinfo("Course Deleted", "Selected course deleted")
+
+            if messagebox.askyesno("Confirm Deletion?", "Are you sure you want to delete this course?"):
+                try:
+                    self.deleteCourseAllDetails(courseID)
+                    db.child("courses").child(courseID).remove()
+                    db.child("coursesENROLL").child(courseID).remove()
+                    self.courseAbbC.set("")
+                    messagebox.showinfo("Course Deleted", "Selected course deleted")
+                except:
+                    messagebox.showerror("Execution Error", "Something wrong with the system!")
+            else:
+                return True
             controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
 
@@ -1157,6 +1165,12 @@ class DeleteCourse(tk.Frame):
         # print(result1)
 
         self.courseAbbC['values'] = result1
+
+    def deleteCourseAllDetails(self, courseID):
+        result = db.child("exams").order_by_child("CourseID").equal_to(courseID).get()
+        for exam in result:
+            # print(exam.key())
+            self.controller.get_frame(DeleteExam).deleteExamDataOfAllStudents(exam.key())
 
 
 class CreateExam(tk.Frame):
@@ -1556,11 +1570,17 @@ class DeleteExam(tk.Frame):
             abbExam = examID.split("/")[0]
             if not (str(self.examAbbC.get()).isspace() or len(str(self.examAbbC.get())) == 0 or str(
                     self.examAbbC.get()) == ""):
-                self.deleteExamDataOfAllStudents(abbExam)
-                db.child("exams").child(abbExam).remove()
-                messagebox.showinfo("Exam Deleted", "Exam deleted")
-                self.courseAbbC.set("")
-                self.examAbbC.set("")
+                if messagebox.askyesno("Confirm Deletion?", "Are you sure you want to delete this exam?"):
+                    try:
+                        self.deleteExamDataOfAllStudents(abbExam)
+                        db.child("exams").child(abbExam).remove()
+                        self.courseAbbC.set("")
+                        self.examAbbC.set("")
+                        messagebox.showinfo("Exam Deleted", "Exam deleted")
+                    except:
+                        messagebox.showerror("Execution Error", "Something wrong with the system!")
+                else:
+                    return True
                 controller.get_frame(TeacherMainPage).courses()
                 controller.show_frame(TeacherMainPage)
             else:
@@ -1872,7 +1892,7 @@ class CourseDetailPage(tk.Frame):
             for student in stuList:
                 stuDetRes = db.child("students").child(student).get()
                 # print(stuDetRes.val())
-                if (stuDetRes.val() == None):
+                if stuDetRes.val() == None:
                     idlist.append(student)
                     namelist.append("-")
                     maillist.append("-")
@@ -2465,6 +2485,147 @@ class TeacherCoursePage(tk.Frame):
         return examsArrays
 
 
+class ExamReports(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg="#414141")
+        self.controller = controller
+
+        courses = []
+        exams = []
+
+        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        frameHeader.pack(side=TOP, fill=X)
+
+        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logoLabel = Label(frameHeader, image=logo)
+        # logoLabel.pack(side=LEFT)
+
+        def getrow():
+            # rowid = trv.identify_row(event.y)
+            item = self.trv.item(self.trv.focus())
+            t1.set(item['values'][0])
+            return t1.get()
+
+        def toggleCheck(event):
+            rowid = self.trv.identify_row(event.y)
+            tag = self.trv.item(rowid, "tags")[0]
+            tags = list(self.trv.item(rowid, "tags"))
+            tags.remove(tag)
+            self.trv.item(rowid, tags=tags)
+            if tag == "checked":
+                self.trv.item(rowid, tags="unchecked")
+            else:
+                self.trv.item(rowid, tags="checked")
+
+        def back():
+            controller.get_frame(TeacherMainPage).courses()
+            controller.show_frame(TeacherMainPage)
+            self.trv.delete(*self.trv.get_children())
+
+        t1 = StringVar()
+
+        selectCourse = Label(frameHeader, text="Select Course", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        selectCourse.place(x=20, y=10)
+
+        self.coursesExamRepC = ttk.Combobox(frameHeader, values=courses, state='readonly', width=30,
+                                            postcommand=self.addCourses)
+        self.coursesExamRepC.place(x=20, y=50)
+
+        selectExam = Label(frameHeader, text="Select Exam", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        selectExam.place(x=250, y=10)
+
+        self.coursesExamRepE = ttk.Combobox(frameHeader, values=exams, state='readonly', width=30,
+                                            postcommand=self.addExams)
+        self.coursesExamRepE.place(x=250, y=50)
+
+        backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
+        backButton.place(x=925, y=35)
+
+        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter.pack(side=TOP, fill=X)
+
+        frameLeft = Frame(frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameLeft.pack(side=LEFT)
+
+        studentListL = Label(frameLeft, width=92, height=2, bg="#313131", text="Exam Student List", fg="#FFFFFF")
+        studentListL.pack(side=TOP)
+
+        self.trv = ttk.Treeview(frameLeft, columns=(1, 2, 3, 4, 5, 6), height=10)
+        style = ttk.Style(self.trv)
+        style.configure('Treeview', rowheight=30)
+
+        self.trv.heading('#0', text="#")
+        self.trv.column("#0", minwidth=0, width=20)
+        self.trv.heading('#1', text="Student ID")
+        self.trv.column("#1", minwidth=0, width=90)
+        self.trv.heading('#2', text="Name / Surname")
+        self.trv.column("#2", minwidth=0, width=120)
+        self.trv.heading('#3', text="Attempt Count")
+        self.trv.column("#3", minwidth=0, width=100)
+        self.trv.heading('#4', text="EyeGaze Count")
+        self.trv.column("#4", minwidth=0, width=100)
+        self.trv.heading('#5', text="FaceRec Count")
+        self.trv.column("#5", minwidth=0, width=100)
+        self.trv.heading('#6', text="Video Count")
+        self.trv.column("#6", minwidth=0, width=100)
+
+        yscrollbar = ttk.Scrollbar(frameLeft, orient="vertical", command=self.trv.yview)
+
+        self.trv.pack(side=LEFT)
+        yscrollbar.pack(side="right", fill="y")
+
+        self.trv.configure(yscrollcommand=yscrollbar.set)
+
+        frameRight = Frame(frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameRight.pack(side=LEFT, fill=BOTH)
+
+        frameRightBot = Frame(frameRight, height=296, width=392, bg="#414141", borderwidth=4, relief=SUNKEN)
+        frameRightBot.place(x=0, y=200)
+
+        selectPath = Label(frameRight, text="Select Path", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        selectPath.place(x=160, y=30)
+
+        selectedPath = Label(frameRight, text="File Path", width=37, height=1, bg="#FFFFFF", fg="#000000")
+        selectedPath.place(x=20, y=108)
+
+        buttonBrowse = Button(frameRight, text="Browse", width=10, bg="#ca3e47", fg="#FFFFFF")
+        buttonBrowse.place(x=300, y=105)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=40, y=50)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=40, y=125)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=40, y=200)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=240, y=50)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=240, y=125)
+
+        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonAction1.place(x=240, y=200)
+
+    def addCourses(self):
+        result = db.child("courses").order_by_child("TeacherMail").equal_to(
+            self.controller.shared_data["email"].get()).get()
+        result1 = list(result.val())
+
+        self.coursesExamRepC['values'] = result1
+
+    def addExams(self):
+        examsResult = db.child("exams").order_by_child("CourseID").equal_to(str(self.coursesExamRepC.get())).get()
+        tempList = []
+        for a in examsResult:
+            name = str(a.key()) + "/" + str(a.val()["ExamType"])
+            tempList.append(name)
+
+        self.coursesExamRepE['values'] = tempList
+
+
 # STUDENT PAGES
 
 
@@ -2960,7 +3121,7 @@ class ExamPageS(tk.Frame):
 
         for i in range(0, 9):
             tempDelta = timedelta(minutes=(i + 1) * lenInMin / 10)
-            print((startTime + tempDelta).time())
+            # print((startTime + tempDelta).time())
             frCheckTimes.append([(startTime + tempDelta), False])
 
         # print(frCheckTimes)
@@ -2981,7 +3142,7 @@ class ExamPageS(tk.Frame):
         resultOnGoing = db.child(examID).child(studentID).child("FrChecks").get()
 
         t3 = Thread(target=self.captureEyeGaze, args=[cap, gaze, endTime])
-        t4 = Thread(target=self.checkEyeGaze, args=[gaze, endTime])
+        t4 = Thread(target=self.checkEyeGaze, args=[gaze, endTime, studentID, examID, startTime])
 
         t3.start()
         t4.start()
@@ -3260,7 +3421,13 @@ class ExamPageS(tk.Frame):
             if ExitButtonState:
                 break
 
-    def checkEyeGaze(self, gaze, endTime):
+    def checkEyeGaze(self, gaze, endTime, studentID, examID, startTime):
+        resultEyeGazeCount = db.child("examEnroll").child(examID).child(studentID).child(
+            "EyeGaze").get()
+        prevcount = 0
+        if resultEyeGazeCount.val() != None:
+            for a in resultEyeGazeCount.val():
+                prevcount += 1
         count = 1
         while True:
             tz_IN = pytz.timezone('Etc/GMT-3')
@@ -3269,16 +3436,21 @@ class ExamPageS(tk.Frame):
             try:
                 left_pupil = gaze.pupil_left_coords()
                 if str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
-                    timeS = datetime.now()
-
+                    timeS = datetime.now(tz_IN)
                     while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
-                        timeE = datetime.now()
+                        timeE = datetime.now(tz_IN)
                         if (timeE - timeS).seconds > 10:
                             while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
                                 gaze.is_top()
-                            timeD = datetime.now()
-                            print("Alert " + str(count) + " took " + str((timeD - timeS).seconds) + " seconds")
-                            print("Started: " + str(timeS.time()) + " Ended: " + str(timeD.time()))
+                            timeD = datetime.now(tz_IN)
+                            data1 = {"Alert": str(count + prevcount), "Duration": str((timeD - timeS).seconds),
+                                     "Started": str(timeS - startTime), "Ended": str(timeD - startTime)}
+                            # data1 = {"Alert": str(count), "Time": str((timeD - timeS).seconds), "Started": str(
+                            # timeS.time()), "Ended": str(timeD.time())}
+                            db.child("examEnroll").child(examID).child(studentID).child("EyeGaze").child(
+                                "EG-" + str(count + prevcount)).set(data1)
+                            # print("Alert " + str(count + prevcount) + " took " + str((timeD - timeS).seconds) + " seconds")
+                            # print("Started: " + str(timeS.time()) + " Ended: " + str(timeD.time()))
                             count += 1
                             # parent = Path(__file__).parent
                             # registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
