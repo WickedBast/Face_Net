@@ -21,6 +21,7 @@ import numpy as np
 import requests
 from threading import *
 import time
+import shutil
 from firebase_admin import storage as admin_storage
 import threading
 import webbrowser
@@ -92,6 +93,7 @@ class FaceNet(tk.Tk):
 
 
 class Login(tk.Frame):
+    # TODO: ADD LOGO
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
@@ -476,9 +478,12 @@ class TeacherMainPage(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
-        # logoLabel = Label(frameHeader, image=logo)
-        # logoLabel.pack(side=LEFT)
+        image = Image.open("images/FaceNetLogo.png")
+        img = ImageTk.PhotoImage(image)
+
+        logoLabel = Label(frameHeader, image=img, borderwidth=0)
+        logoLabel.image = img
+        logoLabel.pack(side=LEFT)
 
         logoutButton = Button(frameHeader, text="Logout", command=lambda: controller.show_frame(Login), width=10,
                               bg="#ca3e47", fg="#FFFFFF")
@@ -513,7 +518,7 @@ class TeacherMainPage(tk.Frame):
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonDE.grid(row=6, column=1, columnspan=3, padx=10, pady=40)
 
-        buttonER = Button(frameButtons, text="Exam Reports", command=lambda: controller.show_frame(ExamReports),
+        buttonER = Button(frameButtons, text="Exam Reports", command=self.openExamReportsPage,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
         buttonER.grid(row=8, column=1, columnspan=3, padx=10, pady=40)
 
@@ -626,6 +631,10 @@ class TeacherMainPage(tk.Frame):
 
         self.controller.show_frame(TeacherCoursePage)
 
+    def openExamReportsPage(self):
+        self.controller.get_frame(ExamReports).buttons()
+        self.controller.show_frame(ExamReports)
+
 
 class StudentMainPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -635,11 +644,10 @@ class StudentMainPage(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        image = Image.open("images/rocket.png")
-        image = image.resize((30, 30))
+        image = Image.open("images/FaceNetLogo.png")
         img = ImageTk.PhotoImage(image)
 
-        logoLabel = Label(frameHeader, image=img)
+        logoLabel = Label(frameHeader, image=img, borderwidth=0)
         logoLabel.image = img
         logoLabel.pack(side=LEFT)
 
@@ -661,17 +669,21 @@ class StudentMainPage(tk.Frame):
         frameButtons = Frame(frameCenter, height=700, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT)
 
-        buttonTS = Button(frameButtons, text="Test System", command=self.test,
+        buttonTF = Button(frameButtons, text="Test FaceRec", command=self.test,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonTS.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
+        buttonTF.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
+
+        buttonTE = Button(frameButtons, text="Test EyeGaze", command=self.capture,
+                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonTE.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
 
         buttonCP = Button(frameButtons, text="Change Picture", command=self.change,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCP.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
+        buttonCP.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
 
         buttonCC = Button(frameButtons, text="Change Password", command=self.changePass,
                           width=15, bg="#ca3e47", fg="#FFFFFF")
-        buttonCC.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
+        buttonCC.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
         # fg="#FFFFFF")
@@ -836,7 +848,7 @@ class StudentMainPage(tk.Frame):
                     countOfSucces = countOfSucces + 1
 
             cv2.waitKey(1)
-        if (escapecondition == True):
+        if escapecondition == True:
             while True:
                 k = cv2.waitKey(1)
                 if k % 256 == 27:
@@ -868,6 +880,50 @@ class StudentMainPage(tk.Frame):
                             colorWhite, thickness, cv2.LINE_AA, False)
                 cv2.imshow("test", img)
                 cv2.waitKey(1)
+
+    def capture(self):
+        gaze = GazeTracking()
+        webcam = cv2.VideoCapture(0)
+
+        while True:
+            # We get a new frame from the webcam
+            _, frame = webcam.read()
+
+            # We send this frame to GazeTracking to analyze it
+            gaze.refresh(frame)
+
+            frame = gaze.annotated_frame()
+            text = ""
+
+            if gaze.is_right():
+                text = "Looking right"
+            elif gaze.is_left():
+                text = "Looking left"
+            elif gaze.is_center():
+                text = "Looking center"
+            elif gaze.is_top():
+                text = "Looking top"
+            elif gaze.is_bottom():
+                text = "Looking bottom"
+
+            cv2.putText(frame, text, (90, 60), cv2.FONT_HERSHEY_DUPLEX, 1.6, (147, 58, 31), 2)
+
+            left_pupil = gaze.pupil_left_coords()
+            right_pupil = gaze.pupil_right_coords()
+            cv2.putText(frame, "Left pupil:  " + str(left_pupil), (90, 130), cv2.FONT_HERSHEY_DUPLEX, 0.9,
+                        (147, 58, 31), 1)
+            cv2.putText(frame, "Right pupil: " + str(right_pupil), (90, 165), cv2.FONT_HERSHEY_DUPLEX, 0.9,
+                        (147, 58, 31),
+                        1)
+            cv2.putText(frame, "Press Esc to exit", (10, 450), cv2.FONT_HERSHEY_DUPLEX, 0.9,
+                        (0, 128, 0), 2)
+
+            cv2.imshow("Demo", frame)
+
+            if cv2.waitKey(1) == 27:
+                webcam.release()
+                cv2.destroyAllWindows()
+                break
 
     def change(self):
         studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
@@ -1689,7 +1745,7 @@ class CourseDetailPage(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
+        # logo = ImageTk.PhotoImage(Image.open(""))
         # logoLabel = Label(frameHeader, image=logo)
         # logoLabel.pack(side=LEFT)
 
@@ -1915,10 +1971,6 @@ class ExamDetailPage(tk.Frame):
 
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
-
-        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
-        # logoLabel = Label(frameHeader, image=logo)
-        # logoLabel.pack(side=LEFT)
 
         def back():
             controller.get_frame(TeacherCoursePage).exams()
@@ -2496,16 +2548,6 @@ class ExamReports(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
-        # logoLabel = Label(frameHeader, image=logo)
-        # logoLabel.pack(side=LEFT)
-
-        def getrow():
-            # rowid = trv.identify_row(event.y)
-            item = self.trv.item(self.trv.focus())
-            t1.set(item['values'][0])
-            return t1.get()
-
         def toggleCheck(event):
             rowid = self.trv.identify_row(event.y)
             tag = self.trv.item(rowid, "tags")[0]
@@ -2521,8 +2563,11 @@ class ExamReports(tk.Frame):
             controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
             self.trv.delete(*self.trv.get_children())
+            self.selectedPath.configure(text="File Path")
+            self.coursesExamRepC.set("")
+            self.coursesExamRepE.set("")
 
-        t1 = StringVar()
+        self.t1 = StringVar()
 
         selectCourse = Label(frameHeader, text="Select Course", width=10, height=2, bg="#313131", fg="#FFFFFF")
         selectCourse.place(x=20, y=10)
@@ -2538,6 +2583,10 @@ class ExamReports(tk.Frame):
                                             postcommand=self.addExams)
         self.coursesExamRepE.place(x=250, y=50)
 
+        getDetailsButton = Button(frameHeader, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
+                                  command=self.completeTable)
+        getDetailsButton.place(x=500, y=47)
+
         backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
         backButton.place(x=925, y=35)
 
@@ -2547,7 +2596,7 @@ class ExamReports(tk.Frame):
         frameLeft = Frame(frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameLeft.pack(side=LEFT)
 
-        studentListL = Label(frameLeft, width=92, height=2, bg="#313131", text="Exam Student List", fg="#FFFFFF")
+        studentListL = Label(frameLeft, width=100, height=2, bg="#313131", text="Exam Student List", fg="#FFFFFF")
         studentListL.pack(side=TOP)
 
         self.trv = ttk.Treeview(frameLeft, columns=(1, 2, 3, 4, 5, 6), height=10)
@@ -2555,19 +2604,19 @@ class ExamReports(tk.Frame):
         style.configure('Treeview', rowheight=30)
 
         self.trv.heading('#0', text="#")
-        self.trv.column("#0", minwidth=0, width=20)
+        self.trv.column("#0", minwidth=0, width=15)
         self.trv.heading('#1', text="Student ID")
-        self.trv.column("#1", minwidth=0, width=90)
-        self.trv.heading('#2', text="Name / Surname")
-        self.trv.column("#2", minwidth=0, width=120)
-        self.trv.heading('#3', text="Attempt Count")
-        self.trv.column("#3", minwidth=0, width=100)
-        self.trv.heading('#4', text="EyeGaze Count")
-        self.trv.column("#4", minwidth=0, width=100)
-        self.trv.heading('#5', text="FaceRec Count")
-        self.trv.column("#5", minwidth=0, width=100)
-        self.trv.heading('#6', text="Video Count")
-        self.trv.column("#6", minwidth=0, width=100)
+        self.trv.column("#1", minwidth=0, width=70)
+        self.trv.heading('#2', text="Attempt Count")
+        self.trv.column("#2", minwidth=0, width=90)
+        self.trv.heading('#3', text="Total FaceRec Count")
+        self.trv.column("#3", minwidth=0, width=120)
+        self.trv.heading('#4', text="False FaceRec Count")
+        self.trv.column("#4", minwidth=0, width=120)
+        self.trv.heading('#5', text="Missed FaceRec Count")
+        self.trv.column("#5", minwidth=0, width=130)
+        self.trv.heading('#6', text="isAlone Violation Count")
+        self.trv.column("#6", minwidth=0, width=140)
 
         yscrollbar = ttk.Scrollbar(frameLeft, orient="vertical", command=self.trv.yview)
 
@@ -2576,38 +2625,32 @@ class ExamReports(tk.Frame):
 
         self.trv.configure(yscrollcommand=yscrollbar.set)
 
-        frameRight = Frame(frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameRight.pack(side=LEFT, fill=BOTH)
+        global StudentIDColumn
+        StudentIDColumn = []
+        global AttemptCount
+        AttemptCount = []
+        global TotalFaceRecCount
+        TotalFaceRecCount = []
+        global FalseFaceRecCount
+        FalseFaceRecCount = []
+        global MissedFaceRecCount
+        MissedFaceRecCount = []
+        global isAloneVioCount
+        isAloneVioCount = []
 
-        frameRightBot = Frame(frameRight, height=296, width=392, bg="#414141", borderwidth=4, relief=SUNKEN)
-        frameRightBot.place(x=0, y=200)
+        self.frameRight = Frame(frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
+        self.frameRight.pack(side=LEFT, fill=BOTH)
 
-        selectPath = Label(frameRight, text="Select Path", width=10, height=2, bg="#313131", fg="#FFFFFF")
-        selectPath.place(x=160, y=30)
+        self.frameRightBot = Frame(self.frameRight, height=296, width=336, bg="#414141", borderwidth=4, relief=SUNKEN)
+        self.frameRightBot.place(x=0, y=200)
 
-        selectedPath = Label(frameRight, text="File Path", width=37, height=1, bg="#FFFFFF", fg="#000000")
-        selectedPath.place(x=20, y=108)
+        selectPath = Label(self.frameRight, text="Select Path", width=10, height=2, bg="#313131", fg="#FFFFFF")
+        selectPath.place(x=135, y=25)
 
-        buttonBrowse = Button(frameRight, text="Browse", width=10, bg="#ca3e47", fg="#FFFFFF")
-        buttonBrowse.place(x=300, y=105)
+        self.selectedPath = Label(self.frameRight, text="File Path", width=44, height=1, bg="#FFFFFF", fg="#000000")
+        self.selectedPath.place(x=10, y=90)
 
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=40, y=50)
-
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=40, y=125)
-
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=40, y=200)
-
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=240, y=50)
-
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=240, y=125)
-
-        buttonAction1 = Button(frameRightBot, text="Delete", width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonAction1.place(x=240, y=200)
+        self.buttons()
 
     def addCourses(self):
         result = db.child("courses").order_by_child("TeacherMail").equal_to(
@@ -2617,13 +2660,223 @@ class ExamReports(tk.Frame):
         self.coursesExamRepC['values'] = result1
 
     def addExams(self):
-        examsResult = db.child("exams").order_by_child("CourseID").equal_to(str(self.coursesExamRepC.get())).get()
-        tempList = []
-        for a in examsResult:
-            name = str(a.key()) + "/" + str(a.val()["ExamType"])
-            tempList.append(name)
+        result = db.child("exams").order_by_child("CourseID").equal_to(str(self.coursesExamRepC.get())).get()
+        typeList = list()
+        for x in result:
+            typeList.append(x.val()["ExamType"])
+        examList = list(result.val())
+        finalList = list()
 
-        self.coursesExamRepE['values'] = tempList
+        for exam, type in zip(examList, typeList):
+            result = db.child("examEnroll").child(exam).get()
+            if result.val() != None:
+                finalList.append(exam + "/" + type)
+
+        self.coursesExamRepE['values'] = finalList
+
+    def completeTable(self):
+        if not (str(self.coursesExamRepE.get()).isspace() or len(str(self.coursesExamRepE.get())) == 0 or str(
+                self.coursesExamRepE.get()) == ""):
+            self.fillTable()
+            self.buttonBrowse.configure(state=NORMAL)
+        else:
+            messagebox.showerror("Blank Spaces", "Select exam")
+
+    def fillTable(self):
+        self.trv.delete(*self.trv.get_children())
+
+        global StudentIDColumn
+        StudentIDColumn.clear()
+        global AttemptCount
+        AttemptCount.clear()
+        global TotalFaceRecCount
+        TotalFaceRecCount.clear()
+        global FalseFaceRecCount
+        FalseFaceRecCount.clear()
+        global MissedFaceRecCount
+        MissedFaceRecCount.clear()
+        global isAloneVioCount
+        isAloneVioCount.clear()
+
+        courseABB = str(self.coursesExamRepE.get()).split("/")
+        oneExamRep = self.getExamReportTable(courseABB[0])
+
+        StudentIDColumn = oneExamRep[0]
+        AttemptCount = oneExamRep[1]
+        TotalFaceRecCount = oneExamRep[2]
+        FalseFaceRecCount = oneExamRep[3]
+        MissedFaceRecCount = oneExamRep[4]
+        isAloneVioCount = oneExamRep[5]
+
+        i = 0
+        for studentID, attempt, totalFR, falseFR, missedFR, isAloneV in zip(StudentIDColumn, AttemptCount,
+                                                                            TotalFaceRecCount, FalseFaceRecCount,
+                                                                            MissedFaceRecCount, isAloneVioCount):
+            self.trv.insert(parent='', index='end', iid=i, text="",
+                            values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV))
+            i += 1
+
+    def getExamReportTable(self, examID):
+        studentIDCol = list()
+        attemptNumCol = list()
+        totalFrCol = list()
+        missedFrCol = list()
+        falseFrCol = list()
+        solVioCol = list()
+        result = db.child("examEnroll").child(examID).get()
+        for a in result:
+            studentIDCol.append(a.key())
+            # print(a.key())
+            # print(a.val())
+            for b in a.val():
+                solVioOcc = False
+                # print(b)
+                # print(a.val()[b])
+                if b == "Attempts":
+                    # print(len(list(a.val()[b])))
+                    attemptNumCol.append(len(list(a.val()[b])))
+                elif b == "FrChecks":
+                    totalCount = 0
+                    missedCount = 0
+                    falseCount = 0
+
+                    for c in a.val()[b]:
+                        # print(c)
+                        # print(a.val()[b][c])
+                        if a.val()[b][c]["Status"] == "Missed":
+                            missedCount += 1
+
+                        elif a.val()[b][c]["Status"] == "False":
+                            falseCount += 1
+                        totalCount += 1
+                    totalFrCol.append(totalCount)
+                    missedFrCol.append(missedCount)
+                    falseFrCol.append(falseCount)
+                elif b == "Solditute":
+                    # print(len(list(a.val()[b])))
+                    solVioOcc = True
+                    solVioCol.append(len(list(a.val()[b])))
+            if solVioOcc == False:
+                solVioCol.append(0)
+        colsArr = list()
+        colsArr.append(studentIDCol)
+        colsArr.append(attemptNumCol)
+        colsArr.append(totalFrCol)
+        colsArr.append(falseFrCol)
+        colsArr.append(missedFrCol)
+        colsArr.append(solVioCol)
+
+        # print(studentIDCol)
+        # print(attemptNumCol)
+        # print(totalFrCol)
+        # print(falseFrCol)
+        # print(missedFrCol)
+        # print(solVioCol)
+        # print(colsArr)
+
+        return colsArr
+
+    def givePath(self):
+        self.filename = filedialog.askdirectory(initialdir="/", title='Please select a directory')
+
+        if len(self.filename) == 0:
+            messagebox.showwarning("Empty Directory", "Please select a directory.")
+            self.selectedPath.configure(text="File Path")
+            self.downMedia.configure(state=DISABLED)
+            self.downAllMedia.configure(state=DISABLED)
+            self.eyeGazeDetail.configure(state=DISABLED)
+
+        else:
+            self.selectedPath.configure(text=self.filename)
+            self.downMedia.configure(state=NORMAL)
+            self.downAllMedia.configure(state=NORMAL)
+            self.eyeGazeDetail.configure(state=NORMAL)
+
+    def buttons(self):
+        self.buttonBrowse = Button(self.frameRight, text="Browse", width=10, bg="#ca3e47", fg="#FFFFFF",
+                                   state=DISABLED, command=self.givePath)
+        self.buttonBrowse.place(x=135, y=150)
+
+        self.downMedia = Button(self.frameRightBot, text="Download Student Media", width=20, bg="#ca3e47", fg="#FFFFFF",
+                                state=DISABLED, command=self.downloadMedia)
+        self.downMedia.place(x=90, y=50)
+
+        self.downAllMedia = Button(self.frameRightBot, text="Download All Students Media", width=25, bg="#ca3e47",
+                                    fg="#FFFFFF", state=DISABLED, command=self.downloadAllMedia)
+        self.downAllMedia.place(x=70, y=125)
+
+        self.eyeGazeDetail = Button(self.frameRightBot, text="Show EyeGaze Details", width=20, bg="#ca3e47", fg="#FFFFFF",
+                                    state=DISABLED)
+        self.eyeGazeDetail.place(x=90, y=200)
+
+    def downloadFilesOfStudent(self, folderPath, examID, studentID):
+        # WAIT FOR DOWNLOAD EKRANINI THREADLE ÇALIŞTIRACAK, GLOBAL STATE İLE BİRBİRLERİNİ BİTİRECEKLER.
+        result = db.child("examEnroll").child(examID).child(studentID).get()
+        folderpath = Path(f"{folderPath}", studentID).__str__()
+        # print(folderpath1)
+        # folderpath = Path(r"C:\Users\KORHAN.KOZ\Desktop\Downloads", studentID).__str__()
+        # print(folderpath)
+        os.mkdir(folderpath)
+        for a in result:
+            # print(a.key())
+            # print(a.val())
+            if a.key() == "Attempts":
+                for b in a.val():
+                    # print(a.val()[b]["PathToImg"])
+                    storage.child("/" + a.val()[b]["PathToImg"]).download(path="ImagesBasic", filename=b + ".png")
+                    parent = Path(__file__).parent
+                    initPath = Path(parent, b + ".png").__str__()
+                    destPath = Path(folderpath).__str__()
+                    shutil.move(initPath, destPath)
+            if a.key() == "FrChecks":
+                # Write handle for missed FR Checks
+                for b in a.val():
+                    # print(a.val()[b]["PathToImg"])
+                    if a.val()[b]["Status"] != "Missed":
+                        storage.child("/" + a.val()[b]["PathToImg"]).download(path="ImagesBasic", filename=b + ".png")
+                        parent = Path(__file__).parent
+                        initPath = Path(parent, b + ".png").__str__()
+                        destPath = Path(folderpath).__str__()
+                        shutil.move(initPath, destPath)
+            if a.key() == "VidRec":
+                for b in a.val():
+                    # print(a.val()[b]["PathToVid"])
+                    storage.child("/" + a.val()[b]["PathToVid"]).download(path="ImagesBasic", filename=b + ".mp4")
+                    parent = Path(__file__).parent
+                    initPath = Path(parent, b + ".mp4").__str__()
+                    destPath = Path(folderpath).__str__()
+                    shutil.move(initPath, destPath)
+
+    def downloadMedia(self):
+        try:
+            rowStudentID = self.getrow()
+            courseIDS = str(self.coursesExamRepE.get()).split("/")
+            self.downloadFilesOfStudent(self.selectedPath.cget("text"), courseIDS[0], rowStudentID)
+            messagebox.showinfo("Media Downloaded", "Execution completed")
+        except:
+            messagebox.showerror("Empty Student", "Student not selected")
+
+    def getrow(self):
+        # rowid = trv.identify_row(event.y)
+        item = self.trv.item(self.trv.focus())
+        self.t1.set(item['values'][0])
+        return self.t1.get()
+
+    def downloadAllMedia(self):
+        courseIDS = str(self.coursesExamRepE.get()).split("/")
+
+        self.downloadAllStudents(self.selectedPath.cget("text"), courseIDS[0])
+        messagebox.showinfo("Media Files Downloaded", "Execution completed")
+
+    def downloadAllStudents(self, folderPath, examID):
+        folderpath1 = Path(f"{folderPath}", examID).__str__()
+        os.mkdir(folderpath1)
+        result = db.child("examEnroll").child(examID).get()
+        stuList = list()
+        for a in result:
+            stuList.append(a.key())
+        for a in stuList:
+            self.downloadFilesOfStudent(folderpath1, examID, a)
 
 
 # STUDENT PAGES
@@ -2636,10 +2889,6 @@ class ExamDetailStudent(tk.Frame):
 
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
-
-        # logo = ImageTk.PhotoImage(Image.open("images/facenet.png"))
-        # logoLabel = Label(frameHeader, image=logo)
-        # logoLabel.pack(side=LEFT)
 
         def back():
             controller.get_frame(CoursePageS).examsS()
@@ -2843,6 +3092,9 @@ class ExamDetailStudent(tk.Frame):
 
             cv2.waitKey(1)
 
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
         if escapecondition:
             # print("Recognition Successful")
             if resultExamEn.val() is None:
@@ -2852,7 +3104,7 @@ class ExamDetailStudent(tk.Frame):
                 path_on_cloud = ExamID + "/" + studentID + "/" + "Attempt-1"
                 storage.child(path_on_cloud).put(registerPic)
 
-                data1 = {"PathToImg": path_on_cloud}
+                data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                 db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child("Attempt-1").set(data1)
             else:
                 # print(resultExamEn.val())
@@ -2865,7 +3117,7 @@ class ExamDetailStudent(tk.Frame):
                 path_on_cloud = ExamID + "/" + studentID + "/" + "Attempt-" + str(1 + len(resultExamEn.val()))
                 storage.child(path_on_cloud).put(registerPic)
 
-                data1 = {"PathToImg": path_on_cloud}
+                data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                 db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child(
                     "Attempt-" + str(1 + len(resultExamEn.val()))).set(data1)
             self.controller.show_frame(ExamPageS)
@@ -3255,6 +3507,9 @@ class ExamPageS(tk.Frame):
                 nonsuccessImg = img
                 tryCount = tryCount + 1
 
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
         resultForFR = db.child("examEnroll").child(examID).child(studentID).child("FrChecks").get()
         if resultForFR.val() is None:
             parent = Path(__file__).parent
@@ -3267,7 +3522,7 @@ class ExamPageS(tk.Frame):
             path_on_cloud = examID + "/" + studentID + "/" + "FR-1"
             storage.child(path_on_cloud).put(registerPic)
 
-            data1 = {"PathToImg": path_on_cloud, "Status": successState}
+            data1 = {"PathToImg": path_on_cloud, "Status": successState, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
             db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child("FR-1").set(data1)
         else:
             # print(resultExamEn.val())
@@ -3283,7 +3538,7 @@ class ExamPageS(tk.Frame):
             path_on_cloud = examID + "/" + studentID + "/" + "FR-" + str(1 + len(resultForFR.val()))
             storage.child(path_on_cloud).put(registerPic)
 
-            data1 = {"PathToImg": path_on_cloud, "Status": successState}
+            data1 = {"PathToImg": path_on_cloud, "Status": successState, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
             db.child("examEnroll").child(examID).child(studentID).child("FrChecks").child(
                 "FR-" + str(1 + len(resultForFR.val()))).set(data1)
 
@@ -3343,8 +3598,6 @@ class ExamPageS(tk.Frame):
                     data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                     db.child("examEnroll").child(examID).child(studentID).child("Solditute").child(
                         "Violation-" + str(1 + len(resultExamSol.val()))).set(data1)
-
-
         elif (datetime_Now - lastTimeSolErrOcc) > timedelta(minutes=0.5):
             # print("Time constraint 2 is ok entering the if")
             if len(facesCurFrame) > 1:
@@ -3378,10 +3631,6 @@ class ExamPageS(tk.Frame):
                     data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                     db.child("examEnroll").child(examID).child(studentID).child("Solditute").child(
                         "Violation-" + str(1 + len(resultExamSol.val()))).set(data1)
-
-
-        else:
-            print("Time constarint is not fulfilled")
 
     def captureVid2(self, cap, endTime):
         # cap = cv2.VideoCapture(0)
