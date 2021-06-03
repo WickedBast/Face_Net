@@ -23,6 +23,7 @@ from threading import *
 import time
 import shutil
 from firebase_admin import storage as admin_storage
+import pytesseract
 import threading
 import webbrowser
 from PIL import ImageTk, Image
@@ -140,6 +141,9 @@ class Login(tk.Frame):
             email.insert(0, "Email")
             password.delete(0, 'end')
             password.insert(0, "Password")
+            t1 = Thread(target=controller.get_frame(StudentRegister).cardReader)
+            t1.start()
+            controller.get_frame(StudentRegister).enable()
             controller.show_frame(StudentRegister)
 
         def backT():
@@ -185,45 +189,56 @@ class Login(tk.Frame):
 
 
 class StudentRegister(tk.Frame):
-    # TODO: Give Feedback
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="#414141")
         self.controller = controller
 
         def register():
-            if str(name.get()).isspace() or str(surname.get()).isspace() or str(email.get()).isspace() or str(
-                    password.get()).isspace() or str(passwordA.get()).isspace() or str(studentID.get()).isspace():
+            if str(self.name.get()).isspace() or str(self.surname.get()).isspace() or str(email.get()).isspace() or str(
+                    password.get()).isspace() or str(passwordA.get()).isspace() or str(self.studentID.get()).isspace():
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("Blank spaces", "Please fill the blank areas.")
-            elif len(str(name.get())) == 0 or len(str(surname.get())) == 0 or len(str(email.get())) == 0 or len(
-                    str(password.get())) == 0 or len(str(passwordA.get())) == 0 or len(str(studentID.get())) == 0:
+            elif len(str(self.name.get())) == 0 or len(str(self.surname.get())) == 0 or len(
+                    str(email.get())) == 0 or len(
+                str(password.get())) == 0 or len(str(passwordA.get())) == 0 or len(str(self.studentID.get())) == 0:
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("Blank spaces", "Please fill the blank areas.")
-            elif not str(name.get()).isalpha() or not str(surname.get()).isalpha():
+            elif not str(self.name.get()).isalpha() or not str(self.surname.get()).isalpha():
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("Wrong Input", "Your name or surname typed wrong.")
-            elif len(str(studentID.get())) != 9:
-                messagebox.showerror("Wrong ID", "Your ID is incorrect.")
             elif not str(email.get()).endswith("@isik.edu.tr"):
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("Wrong Email", "Please enter your Işık University Email.")
             elif len(str(password.get())) < 6:
+                self.studentID.configure(state=DISABLED)
                 messagebox.showwarning("Short Password", "Your password is shorter than 6 characters.")
             elif len(str(password.get())) > 16:
+                self.studentID.configure(state=DISABLED)
                 messagebox.showwarning("Short Password", "Your password is longer than 16 characters.")
             elif str(password.get()) != str(passwordA.get()):
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("Password Mismatch", "Your passwords do not match.")
-            elif not len(db.child("students").order_by_child("id").equal_to(str(studentID.get())).get().val()) == 0:
+            elif not len(
+                    db.child("students").order_by_child("id").equal_to(
+                        (str(self.studentID.get()))[:-1]).get().val()) == 0:
+                self.studentID.configure(state=DISABLED)
                 messagebox.showerror("ID Already Exists", "This ID is registered to the system.")
             else:
                 try:
                     auth1.create_user_with_email_and_password(str(email.get()), str(password.get()))
                 except:
+                    self.studentID.configure(state=DISABLED)
                     messagebox.showerror("Email Already Exists", "This email is registered to the system.")
                     return
+                self.studentID.configure(state=NORMAL)
                 encoding = takePhoto()
-                registerStudent(str(name.get()), str(surname.get()), str(studentID.get()), str(email.get()), encoding,
-                                str(password.get()))
+                registerStudent(str(self.name.get()), str(self.surname.get()), (str(self.studentID.get()))[:-1],
+                                str(email.get()),
+                                encoding, str(password.get()))
                 login = auth1.sign_in_with_email_and_password(str(email.get()), str(password.get()))
                 auth1.send_email_verification(login["idToken"])
                 messagebox.showinfo("User Created", "Check your email to complete registration.")
-                controller.show_frame(Login)
+                back()
 
         def registerStudent(name, surname, id, email, encoding, password):
             data1 = {"name": name, "surname": surname, "id": id, "email": email,
@@ -242,37 +257,68 @@ class StudentRegister(tk.Frame):
             return encodeList
 
         def takePhoto():
+            myList = os.listdir('Temp')
+            filtered_files = [file for file in myList if file.endswith(".png")]
+            for file in filtered_files:
+                path_to_file = os.path.join("Temp", file)
+                os.remove(path_to_file)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            org = (00, 420)
+            org2 = (00, 450)
+            fontScale = 0.75
+            colorRed = (0, 0, 255)
+            colorGreen = (0, 128, 0)
+            thickness = 2
+            status = False
+
             cam = cv2.VideoCapture(0)
-            cv2.namedWindow("test")
+
             while True:
                 ret, frame = cam.read()
                 if not ret:
-                    # print("failed to grab frame")
                     break
-                cv2.imshow("test", frame)
+                if (status):
+                    cv2.putText(frame, "Facial Encodings are taken", org, font, fontScale,
+                                colorGreen, thickness, cv2.LINE_AA, False)
+                    cv2.putText(frame, "Press Esc to exit", org2, font, fontScale,
+                                colorRed, thickness, cv2.LINE_AA, False)
+                else:
+                    cv2.putText(frame, "Press Space to take facial encodings", org, font, fontScale,
+                                colorRed, thickness, cv2.LINE_AA, False)
+
+                cv2.imshow("FaceNet", frame)
 
                 k = cv2.waitKey(1)
                 if k % 256 == 27:
                     # ESC pressed
-                    # print("Escape hit, closing...")
+
                     break
                 elif k % 256 == 32:
                     # SPACE pressed
 
                     parent = Path(__file__).parent
-                    # print(parent)
+
                     registerPic = Path(parent, 'Temp', 'TEST.png').__str__()
-                    # print(registerPic)
+
                     cv2.imwrite(registerPic, frame)
                     myList = os.listdir('Temp')
-                    # print(myList)
+
                     images = []
                     for cl in myList:
                         x = Path(parent, 'Temp')
                         curImg = cv2.imread(f'{x}/{cl}')
                         images.append(curImg)
-                    # print(images)
-                    encodelist = findEncodings(images)
+
+                    facesCurFrame = face_recognition.face_locations(images[0])
+
+                    if (len(facesCurFrame) == 1):
+                        encodelist = findEncodings(images)
+                        if (len(encodelist[0]) > 127):
+                            status = True
+                        else:
+                            status = False
+                    else:
+                        status = False
 
             cam.release()
 
@@ -280,20 +326,19 @@ class StudentRegister(tk.Frame):
             return list(encodelist[0])
 
         def refresh():
-            name.bind("<FocusIn>", lambda args: name.delete(0, 'end'))
-            surname.bind("<FocusIn>", lambda args: surname.delete(0, 'end'))
-            studentID.bind("<FocusIn>", lambda args: studentID.delete(0, 'end'))
+            self.studentID.bind("<FocusIn>", lambda args: self.studentID.delete(0, 'end'))
             email.bind("<FocusIn>", lambda args: email.delete(0, 'end'))
             password.bind("<FocusIn>", lambda args: password.delete(0, 'end'))
             passwordA.bind("<FocusIn>", lambda args: passwordA.delete(0, 'end'))
 
         def back():
-            name.delete(0, 'end')
-            name.insert(0, "Name")
-            surname.delete(0, 'end')
-            surname.insert(0, "Surname")
-            studentID.delete(0, 'end')
-            studentID.insert(0, "Student ID")
+            self.name.delete(0, 'end')
+            self.name.insert(0, "Name")
+            self.surname.delete(0, 'end')
+            self.surname.insert(0, "Surname")
+            self.studentID.configure(state=NORMAL)
+            self.studentID.delete(0, 'end')
+            self.studentID.insert(0, "Student ID")
             email.delete(0, 'end')
             email.insert(0, "Email")
             password.delete(0, 'end')
@@ -305,17 +350,17 @@ class StudentRegister(tk.Frame):
         welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=5, bg="#414141", fg="#FFFFFF")
         welcome.grid(row=1, column=1, columnspan=3, padx=10, pady=10)
 
-        name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        name.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
-        name.insert(0, "Name")
+        self.name = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        self.name.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        self.name.insert(0, "Name")
 
-        surname = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        surname.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
-        surname.insert(0, "Surname")
+        self.surname = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        self.surname.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+        self.surname.insert(0, "Surname")
 
-        studentID = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
-        studentID.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
-        studentID.insert(0, "Student ID")
+        self.studentID = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        self.studentID.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+        self.studentID.insert(0, "Student ID")
 
         email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
         email.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
@@ -336,6 +381,107 @@ class StudentRegister(tk.Frame):
 
         buttonBack = Button(self, text="Back", command=back, bg="#fed049", width=10)
         buttonBack.grid(row=15, column=0, columnspan=3, padx=5, pady=5)
+
+    def cardReader(self):
+        name = ""
+        surname = ""
+        number = ""
+        parent = Path(__file__).parent
+        # print(parent)
+        tessPath = Path(parent, "cardReader", "tesseract.exe").__str__()
+        # print(tessPath)
+        pytesseract.pytesseract.tesseract_cmd = tessPath
+        cam = cv2.VideoCapture(0)
+        cv2.namedWindow("test")
+        while True:
+            ret, frame = cam.read()
+            if not ret:
+                # print("failed to grab frame")
+                break
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            # org
+            org = (350, 470)
+            org2 = (00, 430)
+            org3 = (00, 450)
+            # fontScale
+            fontScale = 0.75
+            # Red color in BGR
+            colorRed = (0, 0, 255)
+            colorGreen = (0, 128, 0)
+            # Line thickness of 2 px
+            thickness = 2
+            cv2.rectangle(frame, (5, 5), (635, 400), (255, 0, 0), 2)
+            cv2.putText(frame, "ID CARD HERE", (250, 30), font, fontScale, (255, 0, 0), thickness, cv2.LINE_AA)
+            cv2.putText(frame, "Name:" + str(name), (350, 430), font, fontScale,
+                        colorRed, thickness, cv2.LINE_AA, False)
+            cv2.putText(frame, "Surname:" + str(surname), (350, 450), font, fontScale,
+                        colorRed, thickness, cv2.LINE_AA, False)
+            cv2.putText(frame, "ID:" + str(number[:-1]), org, font, fontScale,
+                        colorRed, thickness, cv2.LINE_AA, False)
+            cv2.putText(frame, f"Press Space after you align your ID card.", org2, font, 0.5,
+                        colorGreen, thickness, cv2.LINE_AA, False)
+            cv2.putText(frame, f"Press Esc after checking your information", org3, font, 0.5,
+                        colorRed, thickness, cv2.LINE_AA, False)
+            cv2.imshow("test", frame)
+            k = cv2.waitKey(1)
+            if k % 256 == 27:
+                # ESC pressed
+                # print("Escape hit, closing...")
+                break
+            elif k % 256 == 32:
+                # SPACE pressed
+                parent = Path(__file__).parent
+                registerPic = Path(parent, 'Temp', 'cardRead.png').__str__()
+                cv2.imwrite(registerPic, frame)
+                img = cv2.imread(registerPic)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                photo = img[130:280, 210:360]
+
+                text = pytesseract.image_to_string(photo)
+
+                array = text.split(" ")
+                # print(array)
+
+                count = 0
+                name = ""
+                surname = ""
+                number = ""
+
+                for word in array:
+                    if word.startswith("2") and word[3:5].isalpha() and word[:3].isdigit():
+                        # print("Number:")
+                        number = word[:10]
+                        # print(word[:10])
+                    if 3 <= len(word) <= 15 and count == 0:
+                        # print("Name:")
+                        for i in range(len(word)):
+                            if 65 <= ord(word[i]) <= 90:
+                                name += word[i]
+                        # print(name)
+                        count += 1
+                    elif 3 <= len(word) <= 15 and count == 1:
+                        # print("Surname:")
+                        for i in range(len(word)):
+                            if 65 <= ord(word[i]) <= 90:
+                                surname += word[i]
+                        # print(surname)
+                        count += 1
+
+        cam.release()
+
+        cv2.destroyAllWindows()
+
+        self.name.delete(0, 'end')
+        self.name.insert(0, name)
+        self.surname.delete(0, 'end')
+        self.surname.insert(0, surname)
+        self.studentID.delete(0, 'end')
+        self.studentID.insert(0, number)
+        self.studentID.configure(state=DISABLED)
+
+    def enable(self):
+        self.studentID.configure(state=NORMAL)
 
 
 class TeacherRegister(tk.Frame):
@@ -2548,24 +2694,15 @@ class ExamReports(tk.Frame):
         frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         frameHeader.pack(side=TOP, fill=X)
 
-        def toggleCheck(event):
-            rowid = self.trv.identify_row(event.y)
-            tag = self.trv.item(rowid, "tags")[0]
-            tags = list(self.trv.item(rowid, "tags"))
-            tags.remove(tag)
-            self.trv.item(rowid, tags=tags)
-            if tag == "checked":
-                self.trv.item(rowid, tags="unchecked")
-            else:
-                self.trv.item(rowid, tags="checked")
-
         def back():
             controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
             self.trv.delete(*self.trv.get_children())
+            self.trv2.delete(*self.trv2.get_children())
             self.selectedPath.configure(text="File Path")
             self.coursesExamRepC.set("")
             self.coursesExamRepE.set("")
+            self.studentIDLabel.configure(text="")
 
         self.t1 = StringVar()
 
@@ -2590,16 +2727,30 @@ class ExamReports(tk.Frame):
         backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
         backButton.place(x=925, y=35)
 
-        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
-        frameCenter.pack(side=TOP, fill=X)
+        self.frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        self.frameCenter.pack(side=TOP, fill=X)
 
-        frameLeft = Frame(frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
+        self.studentIDLabel = Label(self.frameCenter, width=30, height=1, bg="#414141", fg="#FFFFFF",
+                                    font=('Times', 16))
+        self.studentIDLabel.place(x=5, y=10)
+
+        frameLeft = Frame(self.frameCenter, height=470, width=625, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameLeft.pack(side=LEFT)
 
-        studentListL = Label(frameLeft, width=100, height=2, bg="#313131", text="Exam Student List", fg="#FFFFFF")
+        tabs = ttk.Notebook(frameLeft)
+        tabs.pack(fill=BOTH, expand=True)
+        tabs1 = Frame(tabs)
+        tabs2 = Frame(tabs)
+        tabs3 = Frame(tabs)
+
+        tabs.add(tabs1, text='Class Report')
+        tabs.add(tabs2, text='Student Detail Table')
+        tabs.add(tabs3, text='Student EyeGaze Table')
+
+        studentListL = Label(tabs1, width=100, height=2, bg="#313131", text="Exam Student List", fg="#FFFFFF")
         studentListL.pack(side=TOP)
 
-        self.trv = ttk.Treeview(frameLeft, columns=(1, 2, 3, 4, 5, 6), height=10)
+        self.trv = ttk.Treeview(tabs1, columns=(1, 2, 3, 4, 5, 6), height=10)
         style = ttk.Style(self.trv)
         style.configure('Treeview', rowheight=30)
 
@@ -2618,7 +2769,7 @@ class ExamReports(tk.Frame):
         self.trv.heading('#6', text="isAlone Violation Count")
         self.trv.column("#6", minwidth=0, width=140)
 
-        yscrollbar = ttk.Scrollbar(frameLeft, orient="vertical", command=self.trv.yview)
+        yscrollbar = ttk.Scrollbar(tabs1, orient="vertical", command=self.trv.yview)
 
         self.trv.pack(side=LEFT)
         yscrollbar.pack(side="right", fill="y")
@@ -2638,7 +2789,60 @@ class ExamReports(tk.Frame):
         global isAloneVioCount
         isAloneVioCount = []
 
-        self.frameRight = Frame(frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
+        self.trv2 = ttk.Treeview(tabs2, columns=(1, 2, 3), height=10)
+        style = ttk.Style(self.trv2)
+        style.configure('Treeview', rowheight=30)
+
+        self.trv2.heading('#0', text="")
+        self.trv2.column("#0", minwidth=0, width=80)
+        self.trv2.heading('#1', text="Event Name")
+        self.trv2.column("#1", minwidth=0, width=200)
+        self.trv2.heading('#2', text="Time Stamp")
+        self.trv2.column("#2", minwidth=0, width=200)
+        self.trv2.heading('#3', text="Value")
+        self.trv2.column("#3", minwidth=0, width=200)
+
+        yscrollbar = ttk.Scrollbar(tabs2, orient="vertical", command=self.trv2.yview)
+
+        self.trv2.pack(side=LEFT)
+        yscrollbar.pack(side="right", fill="y")
+
+        self.trv2.configure(yscrollcommand=yscrollbar.set)
+
+        global eventName
+        eventName = []
+        global timeStamp
+        timeStamp = []
+        global categoryPart
+        categoryPart = []
+
+        self.trv3 = ttk.Treeview(tabs3, columns=(1, 2, 3, 4, 5, 6), height=10)
+        style = ttk.Style(self.trv3)
+        style.configure('Treeview', rowheight=30)
+
+        self.trv3.heading('#0', text="#")
+        self.trv3.column("#0", minwidth=0, width=15)
+        self.trv3.heading('#1', text="Student ID")
+        self.trv3.column("#1", minwidth=0, width=70)
+        self.trv3.heading('#2', text="Attempt Count")
+        self.trv3.column("#2", minwidth=0, width=90)
+        self.trv3.heading('#3', text="Total FaceRec Count")
+        self.trv3.column("#3", minwidth=0, width=120)
+        self.trv3.heading('#4', text="False FaceRec Count")
+        self.trv3.column("#4", minwidth=0, width=120)
+        self.trv3.heading('#5', text="Missed FaceRec Count")
+        self.trv3.column("#5", minwidth=0, width=130)
+        self.trv3.heading('#6', text="isAlone Violation Count")
+        self.trv3.column("#6", minwidth=0, width=140)
+
+        yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
+
+        self.trv3.pack(side=LEFT)
+        yscrollbar.pack(side="right", fill="y")
+
+        self.trv3.configure(yscrollcommand=yscrollbar.set)
+
+        self.frameRight = Frame(self.frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
         self.frameRight.pack(side=LEFT, fill=BOTH)
 
         self.frameRightBot = Frame(self.frameRight, height=296, width=336, bg="#414141", borderwidth=4, relief=SUNKEN)
@@ -2679,6 +2883,7 @@ class ExamReports(tk.Frame):
                 self.coursesExamRepE.get()) == ""):
             self.fillTable()
             self.buttonBrowse.configure(state=NORMAL)
+            self.studentDetailBut.configure(state=NORMAL)
         else:
             messagebox.showerror("Blank Spaces", "Select exam")
 
@@ -2802,12 +3007,12 @@ class ExamReports(tk.Frame):
         self.downMedia.place(x=90, y=50)
 
         self.downAllMedia = Button(self.frameRightBot, text="Download All Students Media", width=25, bg="#ca3e47",
-                                    fg="#FFFFFF", state=DISABLED, command=self.downloadAllMedia)
+                                   fg="#FFFFFF", state=DISABLED, command=self.downloadAllMedia)
         self.downAllMedia.place(x=70, y=125)
 
-        self.eyeGazeDetail = Button(self.frameRightBot, text="Show EyeGaze Details", width=20, bg="#ca3e47", fg="#FFFFFF",
-                                    state=DISABLED)
-        self.eyeGazeDetail.place(x=90, y=200)
+        self.studentDetailBut = Button(self.frameRightBot, text="Show Student Details", width=20, bg="#ca3e47",
+                                       fg="#FFFFFF", state=DISABLED, command=self.studentDetails)
+        self.studentDetailBut.place(x=90, y=200)
 
     def downloadFilesOfStudent(self, folderPath, examID, studentID):
         # WAIT FOR DOWNLOAD EKRANINI THREADLE ÇALIŞTIRACAK, GLOBAL STATE İLE BİRBİRLERİNİ BİTİRECEKLER.
@@ -2877,6 +3082,68 @@ class ExamReports(tk.Frame):
             stuList.append(a.key())
         for a in stuList:
             self.downloadFilesOfStudent(folderpath1, examID, a)
+
+    def getDetailedReportTable(self, examID, studentID):
+        finalArr = list()
+        eventNameCol = list()
+        timestampCol = list()
+        categoryCol = list()
+        result = db.child("examEnroll").child(examID).child(studentID).get()
+        for a in result:
+            if a.key() == "Attempts":
+                for b in a.val():
+                    eventNameCol.append(b)
+                    timestampCol.append(a.val()[b]["TimeStamp"])
+                    categoryCol.append(a.key())
+            if a.key() == "FrChecks":
+                for b in a.val():
+                    eventNameCol.append(b)
+                    if a.val()[b]["Status"] != "Missed":
+                        timestampCol.append(a.val()[b]["TimeStamp"])
+                    else:
+                        timestampCol.append("-")
+                    categoryCol.append(a.key())
+            if a.key() == "Solditute":
+                for b in a.val():
+                    eventNameCol.append(b)
+                    timestampCol.append(a.val()[b]["TimeStamp"])
+                    categoryCol.append(a.key())
+
+        finalArr.append(eventNameCol)
+        finalArr.append(timestampCol)
+        finalArr.append(categoryCol)
+
+        return finalArr
+
+    def studentDetails(self):
+        self.trv2.delete(*self.trv2.get_children())
+
+        global eventName
+        eventName.clear()
+        global timeStamp
+        timeStamp.clear()
+        global categoryPart
+        categoryPart.clear()
+
+        try:
+            courseIDS = str(self.coursesExamRepE.get()).split("/")
+            rowStudentID = self.getrow()
+
+            self.studentIDLabel.configure(text="Selected Student: " + str(rowStudentID))
+
+            table2data = self.getDetailedReportTable(courseIDS[0], rowStudentID)
+
+            eventName = table2data[0]
+            timeStamp = table2data[1]
+            categoryPart = table2data[2]
+
+            i = 0
+            for event, timestampTS, categoryProduct in zip(eventName, timeStamp, categoryPart):
+                self.trv2.insert(parent='', index='end', iid=i, text="",
+                             values=(event, timestampTS, categoryProduct))
+                i += 1
+        except:
+            messagebox.showerror("Empty Student", "Select a Student")
 
 
 # STUDENT PAGES
