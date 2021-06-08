@@ -28,6 +28,7 @@ import threading
 import webbrowser
 from PIL import ImageTk, Image
 
+#sdsddsdssdds
 firebaseConfig = {
     "apiKey": "AIzaSyCGHyT8asvQwZUGZtpIbTYRozvLYaHBqPo",
     "authDomain": "facenet-f0615.firebaseapp.com",
