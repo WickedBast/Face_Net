@@ -24,11 +24,8 @@ import time
 import shutil
 from firebase_admin import storage as admin_storage
 import pytesseract
-import threading
-import webbrowser
 from PIL import ImageTk, Image
 
-#sdsddsdssdds
 firebaseConfig = {
     "apiKey": "AIzaSyCGHyT8asvQwZUGZtpIbTYRozvLYaHBqPo",
     "authDomain": "facenet-f0615.firebaseapp.com",
@@ -154,22 +151,22 @@ class Login(tk.Frame):
             password.insert(0, "Password")
             controller.show_frame(TeacherRegister)
 
-        welcome = Label(self, text=" SIGN IN ", width=150, height=10, bg="#414141", fg="#FFFFFF")
-        welcome.grid(row=3, column=1, columnspan=3, padx=10, pady=10)
+        welcome = Label(self, text=" SIGN IN ", height=5, bg="#414141", fg="#FFFFFF", font=('Times', 30))
+        welcome.pack(side=TOP, fill=X)
 
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
-        emailL.grid(row=5, column=0, columnspan=3, padx=10, pady=20)
+        emailL.place(x=300, y=200)
 
         email = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF",
                       textvariable=self.controller.shared_data["email"])
-        email.grid(row=5, column=1, columnspan=3, padx=10, pady=10)
+        email.place(x=380, y=205)
         email.insert(0, "Email")
 
         passwordL = Label(self, text="Password:", width=10, height=2, bg="#313131", fg="#FFFFFF")
-        passwordL.grid(row=7, column=0, columnspan=3, padx=10, pady=10)
+        passwordL.place(x=300, y=280)
 
         password = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF", show="*")
-        password.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+        password.place(x=380, y=285)
         password.insert(0, "Password")
 
         refresh()
@@ -177,16 +174,16 @@ class Login(tk.Frame):
         forgotPassword = Button(self, text="Forgot your password?", cursor="hand2",
                                 command=lambda: controller.show_frame(ForgotPassword), bg="#ca3e47", fg="#FFFFFF",
                                 width=20)
-        forgotPassword.grid(row=23, column=1, columnspan=3, padx=10, pady=10)
+        forgotPassword.place(x=450, y=450)
 
         myButton = Button(self, text="Sign In!", command=login, fg="white", bg="#ca3e47", width=10)
-        myButton.grid(row=17, column=1, columnspan=3, padx=10, pady=20)
+        myButton.place(x=485, y=350)
 
         buttonStudent = Button(self, text="Student Sign Up", command=backS, bg="#325288", fg="#FFFFFF", width=15)
-        buttonStudent.grid(row=21, column=0, columnspan=3, padx=5, pady=5)
+        buttonStudent.place(x=300, y=400)
 
         buttonTeacher = Button(self, text="Teacher Sign Up", command=backT, bg="#325288", fg="#FFFFFF", width=15)
-        buttonTeacher.grid(row=21, column=2, columnspan=3, padx=5, pady=5)
+        buttonTeacher.place(x=630, y=400)
 
 
 class StudentRegister(tk.Frame):
@@ -673,25 +670,32 @@ class TeacherMainPage(tk.Frame):
         # fg="#FFFFFF")
         # buttonRefresh.grid(row=9, column=1, columnspan=3, padx=10, pady=40)
 
-        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameCE.pack(side=LEFT, fill=X)
-
         f = ('Times', 20)
 
-        courseList = Label(frameCE, height=2, bg="#313131", text="Courses", fg="#FFFFFF", font=f)
+        courseList = Label(frameCenter, height=2, bg="#313131", text="Courses", fg="#FFFFFF", font=f)
         courseList.pack(side=TOP, fill=X)
+
+        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameCE.pack(side=TOP, fill=X)
 
         self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameCourses.pack(side=TOP, fill=X)
 
+        self.canvasT = Canvas(self.frameCourses, height=410)
+        self.canvasT.pack(side=TOP, fill=BOTH, expand=1)
+
+        xscrollbarT = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvasT.xview)
+        xscrollbarT.pack(side=BOTTOM, fill=X)
+
+        self.canvasT.configure(xscrollcommand=xscrollbarT.set)
+        self.canvasT.bind('<Configure>', lambda e: self.canvasT.configure(scrollregion=self.canvasT.bbox("all")))
+
+        self.sec_frameT = Frame(self.canvasT, height=500, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvasT.create_window((0, 500), window=self.sec_frameT, anchor="sw")
+
         global coursesofTeacher
         coursesofTeacher = []
-
-        # canvas = Canvas(frameCourses)
-        # scroll = ttk.Scrollbar(frameCourses, orient=HORIZONTAL, command=canvas.xview)
-        # scroll.pack(side=BOTTOM, fill=X)
-        # canvas.configure(xscrollcommand=scroll.set)
-        # canvas.pack(side=LEFT)
 
     def createExam(self):
         self.controller.get_frame(CreateExam).examIDCon()
@@ -704,13 +708,20 @@ class TeacherMainPage(tk.Frame):
 
         # print(courses)
 
-        for widget in self.frameCourses.winfo_children():
+        for widget in self.sec_frameT.winfo_children():
             widget.destroy()
+        '''
+        if len(coursesofTeacher) >= 4:
+            self.sec_frameT.configure(width=len(coursesofStudent) * 250)
+        '''
+        size = 0
 
         for course in courses:
-            self.frameCourse = Frame(self.frameCourses, height=450, width=250, bg="#414141", borderwidth=2,
+            self.frameCourse = Frame(self.sec_frameT, height=450, width=250, bg="#414141", borderwidth=2,
                                      relief=SUNKEN)
             self.frameCourse.pack(side=LEFT)
+            self.frameCourse.place(x=size, y=0)
+            size += 251
 
             self.labelCourse = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[1], fg="#FFFFFF")
             self.labelCourse.place(x=25, y=50)
@@ -728,6 +739,15 @@ class TeacherMainPage(tk.Frame):
                                       command=lambda courseID=course[0]: self.openExamDetail(courseID))
             # threading.Thread(target= , args =[]).start()
             self.buttonExams.place(x=75, y=320)
+
+        if len(coursesofTeacher) == 0:
+            for i in range(4):
+                self.frameCourse = Frame(self.frameCourses, height=450, width=250, bg="#414141", relief=SUNKEN)
+                self.frameCourse.pack(side=LEFT)
+
+            self.emptyLabelT = Label(self.frameCourses, height=2, bg="#313131", text="There are no Created Courses",
+                                     fg="#FFFFFF", font=('Times', 30))
+            self.emptyLabelT.place(x=200, y=150)
 
     def getCourseCodesOfTeacher(self, teacherMail):
         coursesArrays = []
@@ -810,10 +830,10 @@ class StudentMainPage(tk.Frame):
         welcomeMessageStudent.set("")
         nameLabel.pack(side=RIGHT)
 
-        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter = Frame(self, width=1350, height=880, relief=RIDGE, bg="#414141")
         frameCenter.pack(side=TOP, fill=X)
 
-        frameButtons = Frame(frameCenter, height=700, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameButtons = Frame(frameCenter, height=880, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT)
 
         buttonTF = Button(frameButtons, text="Test FaceRec", command=self.test,
@@ -838,23 +858,27 @@ class StudentMainPage(tk.Frame):
 
         f = ('Times', 20)
 
-        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameCE.pack(side=LEFT, fill=X)
-
-        courseList = Label(frameCE, height=2, bg="#313131", text="Courses", fg="#FFFFFF", font=f)
+        courseList = Label(frameCenter, height=2, bg="#313131", text="Courses", fg="#FFFFFF", font=f)
         courseList.pack(side=TOP, fill=X)
+
+        frameCE = Frame(frameCenter, height=700, width=1350, bg="#414141", borderwidth=2, relief=SUNKEN)
+        frameCE.pack(side=TOP, fill=X)
 
         self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameCourses.pack(side=TOP, fill=X)
 
-        canvas = Canvas(self.frameCourses)
-        frameScroll = Frame(canvas)
-        xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=canvas.xview)
-        # canvas.configure(canvas.xview_scroll())
+        self.canvas = Canvas(self.frameCourses, height=410)
+        self.canvas.pack(side=TOP, fill=BOTH, expand=1)
 
+        xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvas.xview)
         xscrollbar.pack(side=BOTTOM, fill=X)
 
-        # canvas.pack(side=LEFT)
+        self.canvas.configure(xscrollcommand=xscrollbar.set)
+        self.canvas.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.sec_frame = Frame(self.canvas, height=500, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvas.create_window((0, 500), window=self.sec_frame, anchor="sw")
 
         global coursesofStudent
         coursesofStudent = []
@@ -863,15 +887,24 @@ class StudentMainPage(tk.Frame):
         global coursesofStudent
         coursesofStudent = self.getCoursesOfStudent(self.getIDfromMail(self.controller.shared_data["email"].get()))
 
-        for widget in self.frameCourses.winfo_children():
+        for widget in self.sec_frame.winfo_children():
             widget.destroy()
+        '''
+        if len(coursesofStudent) >= 4:
+            self.sec_frame.configure(width=len(coursesofStudent) * 250)
+        '''
+        size = 0
 
         for course in coursesofStudent:
-            self.frameCourse = Frame(self.frameCourses, height=450, width=250, bg="#414141", borderwidth=2,
+            self.frameCourse = Frame(self.sec_frame, height=450, width=250, bg="#414141", borderwidth=2,
                                      relief=SUNKEN)
-            self.frameCourse.pack(side=LEFT)
 
-            self.labelCourse = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[1], fg="#FFFFFF")
+            self.frameCourse.pack(side=LEFT)
+            self.frameCourse.place(x=size, y=0)
+            size += 251
+
+            self.labelCourse = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[1],
+                                     fg="#FFFFFF")
             self.labelCourse.place(x=25, y=50)
 
             self.labelCourseAbb = Label(self.frameCourse, height=3, width=28, bg="#313131", text=course[0],
@@ -885,6 +918,15 @@ class StudentMainPage(tk.Frame):
             self.buttonCourse = Button(self.frameCourse, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
                                        command=lambda courseID=course[0]: self.openCourseDetail(courseID))
             self.buttonCourse.place(x=75, y=330)
+
+        if len(coursesofStudent) == 0:
+            for i in range(4):
+                self.frameCourse = Frame(self.frameCourses, height=450, width=250, bg="#414141", relief=SUNKEN)
+                self.frameCourse.pack(side=LEFT)
+
+            self.emptyLabel = Label(self.sec_frame, height=2, bg="#313131", text="There are no Enrolled Courses",
+                                    fg="#FFFFFF", font=('Times', 30))
+            self.emptyLabel.place(x=200, y=150)
 
     def getCoursesOfStudent(self, studentID):
         coursesArrays = []
@@ -955,6 +997,8 @@ class StudentMainPage(tk.Frame):
                 # ESC pressed
                 escapecondition = False
                 # print("Escape hit, closing...")
+                cap.release()
+                cv2.destroyAllWindows()
                 break
             success, img = cap.read()
             if not success:
@@ -1071,6 +1115,8 @@ class StudentMainPage(tk.Frame):
                 webcam.release()
                 cv2.destroyAllWindows()
                 break
+
+        self.controller.get_frame(StudentMainPage).coursesS()
 
     def change(self):
         studentID = self.getIDfromMailS(self.controller.shared_data["email"].get())
@@ -1972,6 +2018,7 @@ class CourseDetailPage(tk.Frame):
             controller.get_frame(TeacherMainPage).courses()
             controller.show_frame(TeacherMainPage)
             self.trv.delete(*self.trv.get_children())
+            studentID.delete(0, 'end')
 
         t1 = StringVar()
         t2 = StringVar()
@@ -2511,35 +2558,58 @@ class TeacherCoursePage(tk.Frame):
         global courseAbb
         global courseName
 
-        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
-        frameHeader.pack(side=TOP, fill=X)
+        self.frameHeader = Frame(self, height=95, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        self.frameHeader.pack(side=TOP, fill=X)
 
-        courseAbbLabel = Label(frameHeader, height=6, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF")
-        courseAbbLabel.pack(side=LEFT)
+        courseAbbLabel = Label(self.frameHeader, height=5, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF")
+        courseAbbLabel.place(x=10, y=10)
 
-        courseNameLabel = Label(frameHeader, height=6, width=40, bg="#313131", textvariable=courseName, fg="#FFFFFF")
-        courseNameLabel.pack(side=LEFT)
+        courseNameLabel = Label(self.frameHeader, height=5, width=30, bg="#313131", textvariable=courseName, fg="#FFFFFF")
+        courseNameLabel.place(x=180, y=10)
 
-        backButton = Button(frameHeader, text="Back", command=back, width=10,
-                            bg="#fed049")
-        backButton.pack(side=RIGHT)
+        backButton = Button(self.frameHeader, text="Back", command=back, width=10, bg="#fed049")
+        backButton.place(x=925, y=35)
 
-        frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
+        frameCenter = Frame(self, height=780, bg="#414141", relief=RIDGE)
         frameCenter.pack(side=TOP, fill=X)
 
         examFList = Label(frameCenter, height=2, bg="#525252", text="Upcoming Exams", fg="#FFFFFF")
         examFList.pack(side=TOP, fill=X)
 
-        self.frameFutureExams = Frame(frameCenter, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameFutureExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.frameFutureExams.pack(side=TOP, fill=X)
+
+        self.canvasFuture = Canvas(self.frameFutureExams, height=198)
+        self.canvasFuture.pack(side=TOP, fill=X, expand=YES)
+
+        self.xscrollbarFuture = ttk.Scrollbar(self.frameFutureExams, orient=HORIZONTAL, command=self.canvasFuture.xview)
+        self.xscrollbarFuture.pack(side=TOP, fill=X)
+
+        self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
+        self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+
+        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
 
         examPList = Label(frameCenter, height=2, bg="#525252", text="Past Exams", fg="#FFFFFF")
         examPList.pack(side=TOP, fill=X)
 
-        self.framePastExams = Frame(frameCenter, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.framePastExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.framePastExams.pack(side=TOP, fill=X)
 
-        self.exams()
+        self.canvasPast = Canvas(self.framePastExams, height=198)
+        self.canvasPast.pack(side=TOP, fill=X, expand=YES)
+
+        self.xscrollbarPast = ttk.Scrollbar(self.framePastExams, orient=HORIZONTAL, command=self.canvasPast.xview)
+        self.xscrollbarPast.pack(side=TOP, fill=X)
+
+        self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
+        self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+
+        self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
 
     def exams(self):
         tz_IN = pytz.timezone('Etc/GMT-3')
@@ -2552,11 +2622,14 @@ class TeacherCoursePage(tk.Frame):
         futureExamsCount = 0
         f = ('Times', 30)
 
-        for widget in self.frameFutureExams.winfo_children():
+        for widget in self.secFrameFuture.winfo_children():
             widget.destroy()
 
-        for widget in self.framePastExams.winfo_children():
+        for widget in self.secFramePast.winfo_children():
             widget.destroy()
+
+        sizePast = 0
+        sizeFuture = 0
 
         for exam in examsofTeacher:
             splitArrDur = str(exam[3]).split(sep=":")
@@ -2574,9 +2647,11 @@ class TeacherCoursePage(tk.Frame):
 
             if endTime < datetime_Now:
                 pastExamsCount += 1
-                self.frameExam = Frame(self.framePastExams, height=200, width=250, bg="#414141", borderwidth=2,
+                self.frameExam = Frame(self.secFramePast, height=200, width=250, bg="#414141", borderwidth=2,
                                        relief=SUNKEN)
                 self.frameExam.pack(side=LEFT)
+                self.frameExam.place(x=sizePast, y=0)
+                sizePast += 251
 
                 self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
                 self.labelExamName.place(x=25, y=10)
@@ -2598,9 +2673,11 @@ class TeacherCoursePage(tk.Frame):
 
             else:
                 futureExamsCount += 1
-                self.frameExam = Frame(self.frameFutureExams, height=200, width=250, bg="#414141", borderwidth=2,
+                self.frameExam = Frame(self.secFrameFuture, height=200, width=250, bg="#414141", borderwidth=2,
                                        relief=SUNKEN)
                 self.frameExam.pack(side=LEFT)
+                self.frameExam.place(x=sizeFuture, y=0)
+                sizeFuture += 251
 
                 self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
                 self.labelExamName.place(x=25, y=10)
@@ -2617,13 +2694,34 @@ class TeacherCoursePage(tk.Frame):
                 self.buttonExam.place(x=75, y=160)
 
         if pastExamsCount == 0:
-            examNoPast = Label(self.framePastExams, height=4, bg="#414141", text="There are no finished exams",
-                               fg="#FFFFFF", font=f)
-            examNoPast.pack(fill=X, expand=True)
+            self.examNoPast = Label(self.secFramePast, height=5, width=50, bg="#414141",
+                               text="There are no finished exams", fg="#FFFFFF", font=f)
+            self.examNoPast.pack(fill=X, expand=True)
+
+            self.xscrollbarPast.pack_forget()
+
+        else:
+            self.xscrollbarPast.pack(side=TOP, fill=X)
+
+            self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
+            self.canvasPast.bind('<Configure>',
+                                 lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+
         if futureExamsCount == 0:
-            examNoFuture = Label(self.frameFutureExams, height=4, bg="#414141", text="There are no upcoming exams",
-                                 fg="#FFFFFF", font=f)
+            self.frameHeader.configure(height=110)
+            examNoFuture = Label(self.secFrameFuture, height=5, width=50, bg="#414141",
+                                 text="There are no upcoming exams", fg="#FFFFFF", font=f)
             examNoFuture.pack(fill=X, expand=True)
+
+            self.xscrollbarFuture.pack_forget()
+
+        else:
+            self.frameHeader.configure(height=95)
+            self.xscrollbarFuture.pack(side=TOP, fill=X)
+
+            self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
+            self.canvasFuture.bind('<Configure>',
+                                   lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
     def openExamDetail(self, examID):
         self.controller.shared_data["selectedExam"] = examID
@@ -2753,7 +2851,11 @@ class ExamReports(tk.Frame):
 
         self.trv = ttk.Treeview(tabs1, columns=(1, 2, 3, 4, 5, 6), height=10)
         style = ttk.Style(self.trv)
-        style.configure('Treeview', rowheight=30)
+        style.theme_use("clam")
+
+        style.configure("Treeview", rowheight=30, background="#D3D3D3", foreground="black", fieldbackground="silver")
+
+        style.map('Treeview', background=[('selected', 'blue')])
 
         self.trv.heading('#0', text="#")
         self.trv.column("#0", minwidth=0, width=15)
@@ -2817,24 +2919,20 @@ class ExamReports(tk.Frame):
         global categoryPart
         categoryPart = []
 
-        self.trv3 = ttk.Treeview(tabs3, columns=(1, 2, 3, 4, 5, 6), height=10)
+        self.trv3 = ttk.Treeview(tabs3, columns=(1, 2, 3, 4), height=10)
         style = ttk.Style(self.trv3)
         style.configure('Treeview', rowheight=30)
 
-        self.trv3.heading('#0', text="#")
-        self.trv3.column("#0", minwidth=0, width=15)
-        self.trv3.heading('#1', text="Student ID")
-        self.trv3.column("#1", minwidth=0, width=70)
-        self.trv3.heading('#2', text="Attempt Count")
-        self.trv3.column("#2", minwidth=0, width=90)
-        self.trv3.heading('#3', text="Total FaceRec Count")
-        self.trv3.column("#3", minwidth=0, width=120)
-        self.trv3.heading('#4', text="False FaceRec Count")
-        self.trv3.column("#4", minwidth=0, width=120)
-        self.trv3.heading('#5', text="Missed FaceRec Count")
-        self.trv3.column("#5", minwidth=0, width=130)
-        self.trv3.heading('#6', text="isAlone Violation Count")
-        self.trv3.column("#6", minwidth=0, width=140)
+        self.trv3.heading('#0', text="")
+        self.trv3.column("#0", minwidth=0, width=80)
+        self.trv3.heading('#1', text="EyeGaze Code")
+        self.trv3.column("#1", minwidth=0, width=180)
+        self.trv3.heading('#2', text="Duration")
+        self.trv3.column("#2", minwidth=0, width=130)
+        self.trv3.heading('#3', text="End Time")
+        self.trv3.column("#3", minwidth=0, width=130)
+        self.trv3.heading('#4', text="Start Time")
+        self.trv3.column("#4", minwidth=0, width=180)
 
         yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
 
@@ -2842,6 +2940,15 @@ class ExamReports(tk.Frame):
         yscrollbar.pack(side="right", fill="y")
 
         self.trv3.configure(yscrollcommand=yscrollbar.set)
+
+        global eyeGaCode
+        eyeGaCode = []
+        global eyeDuration
+        eyeDuration = []
+        global eyeEndTime
+        eyeEndTime = []
+        global eyeStartTime
+        eyeStartTime = []
 
         self.frameRight = Frame(self.frameCenter, height=500, width=425, bg="#414141", borderwidth=2, relief=SUNKEN)
         self.frameRight.pack(side=LEFT, fill=BOTH)
@@ -2914,12 +3021,21 @@ class ExamReports(tk.Frame):
         MissedFaceRecCount = oneExamRep[4]
         isAloneVioCount = oneExamRep[5]
 
+        self.trv.tag_configure('suspicious', background="#EE5048")
+        self.trv.tag_configure('clean', background="#FFFFFF")
+
         i = 0
         for studentID, attempt, totalFR, falseFR, missedFR, isAloneV in zip(StudentIDColumn, AttemptCount,
                                                                             TotalFaceRecCount, FalseFaceRecCount,
                                                                             MissedFaceRecCount, isAloneVioCount):
-            self.trv.insert(parent='', index='end', iid=i, text="",
-                            values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV))
+            if int(falseFR) >= 1 or int(missedFR) >= 1 or int(isAloneV) >= 1:
+                self.trv.insert(parent='', index='end', iid=i, text="",
+                                values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                tags=('suspicious',))
+            else:
+                self.trv.insert(parent='', index='end', iid=i, text="",
+                                values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                tags=('clean',))
             i += 1
 
     def getExamReportTable(self, examID):
@@ -2952,7 +3068,7 @@ class ExamReports(tk.Frame):
                         if a.val()[b][c]["Status"] == "Missed":
                             missedCount += 1
 
-                        elif a.val()[b][c]["Status"] == "False":
+                        elif a.val()[b][c]["Status"] == False:
                             falseCount += 1
                         totalCount += 1
                     totalFrCol.append(totalCount)
@@ -2990,13 +3106,11 @@ class ExamReports(tk.Frame):
             self.selectedPath.configure(text="File Path")
             self.downMedia.configure(state=DISABLED)
             self.downAllMedia.configure(state=DISABLED)
-            self.eyeGazeDetail.configure(state=DISABLED)
 
         else:
             self.selectedPath.configure(text=self.filename)
             self.downMedia.configure(state=NORMAL)
             self.downAllMedia.configure(state=NORMAL)
-            self.eyeGazeDetail.configure(state=NORMAL)
 
     def buttons(self):
         self.buttonBrowse = Button(self.frameRight, text="Browse", width=10, bg="#ca3e47", fg="#FFFFFF",
@@ -3116,8 +3230,33 @@ class ExamReports(tk.Frame):
 
         return finalArr
 
+    def getEyeGazeReport(self, examID, studentID):
+        result = db.child("examEnroll").child(examID).child(studentID).get()
+
+        namesCol = []
+        finalArr = []
+        durationCol = []
+        endedCol = []
+        startedCol = []
+
+        for a in result:
+            if (a.key() == "EyeGaze"):
+                for b in a.val():
+                    namesCol.append(b)
+                    durationCol.append(a.val()[b]['Duration'])
+                    endedCol.append(a.val()[b]['Ended'])
+                    startedCol.append(a.val()[b]['Started'])
+
+        finalArr.append(namesCol)
+        finalArr.append(durationCol)
+        finalArr.append(endedCol)
+        finalArr.append(startedCol)
+        # print(finalArr)
+        return finalArr
+
     def studentDetails(self):
         self.trv2.delete(*self.trv2.get_children())
+        self.trv3.delete(*self.trv3.get_children())
 
         global eventName
         eventName.clear()
@@ -3126,6 +3265,15 @@ class ExamReports(tk.Frame):
         global categoryPart
         categoryPart.clear()
 
+        global eyeGaCode
+        eyeGaCode.clear()
+        global eyeDuration
+        eyeDuration.clear()
+        global eyeEndTime
+        eyeEndTime.clear()
+        global eyeStartTime
+        eyeStartTime.clear()
+
         try:
             courseIDS = str(self.coursesExamRepE.get()).split("/")
             rowStudentID = self.getrow()
@@ -3133,16 +3281,28 @@ class ExamReports(tk.Frame):
             self.studentIDLabel.configure(text="Selected Student: " + str(rowStudentID))
 
             table2data = self.getDetailedReportTable(courseIDS[0], rowStudentID)
+            table3data = self.getEyeGazeReport(courseIDS[0], rowStudentID)
 
             eventName = table2data[0]
             timeStamp = table2data[1]
             categoryPart = table2data[2]
 
+            eyeGaCode = table3data[0]
+            eyeDuration = table3data[1]
+            eyeEndTime = table3data[2]
+            eyeStartTime = table3data[3]
+
             i = 0
+            j = 0
             for event, timestampTS, categoryProduct in zip(eventName, timeStamp, categoryPart):
                 self.trv2.insert(parent='', index='end', iid=i, text="",
-                             values=(event, timestampTS, categoryProduct))
+                                 values=(event, timestampTS, categoryProduct))
                 i += 1
+            for gazeCode, duration, endTime, startTime in zip(eyeGaCode, eyeDuration, eyeEndTime, eyeStartTime):
+                self.trv3.insert(parent='', index='end', iid=j, text="",
+                                 values=(gazeCode, duration, endTime, startTime))
+                j += 1
+
         except:
             messagebox.showerror("Empty Student", "Select a Student")
 
@@ -3388,6 +3548,8 @@ class ExamDetailStudent(tk.Frame):
                 data1 = {"PathToImg": path_on_cloud, "TimeStamp": datetime_Now.strftime("%H:%M:%S")}
                 db.child("examEnroll").child(ExamID).child(studentID).child("Attempts").child(
                     "Attempt-" + str(1 + len(resultExamEn.val()))).set(data1)
+
+            self.controller.get_frame(ExamPageS).getExamInfoOnce()
             self.controller.show_frame(ExamPageS)
 
         cap.release()
@@ -3409,18 +3571,17 @@ class CoursePageS(tk.Frame):
         global courseAbb
         global courseName
 
-        frameHeader = Frame(self, height=100, width=1350, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
-        frameHeader.pack(side=TOP, fill=X)
+        self.frameHeader = Frame(self, height=95, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
+        self.frameHeader.pack(side=TOP, fill=X)
 
-        courseAbbLabel = Label(frameHeader, height=6, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF")
-        courseAbbLabel.pack(side=LEFT)
+        courseAbbLabel = Label(self.frameHeader, height=5, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF")
+        courseAbbLabel.place(x=10, y=10)
 
-        courseNameLabel = Label(frameHeader, height=6, width=40, bg="#313131", textvariable=courseName, fg="#FFFFFF")
-        courseNameLabel.pack(side=LEFT)
+        courseNameLabel = Label(self.frameHeader, height=5, width=30, bg="#313131", textvariable=courseName, fg="#FFFFFF")
+        courseNameLabel.place(x=180, y=10)
 
-        backButton = Button(frameHeader, text="Back", command=back, width=10,
-                            bg="#fed049")
-        backButton.pack(side=RIGHT)
+        backButton = Button(self.frameHeader, text="Back", command=back, width=10, bg="#fed049")
+        backButton.place(x=925, y=35)
 
         frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
         frameCenter.pack(side=TOP, fill=X)
@@ -3428,16 +3589,40 @@ class CoursePageS(tk.Frame):
         examFList = Label(frameCenter, height=2, bg="#525252", text="Upcoming Exams", fg="#FFFFFF")
         examFList.pack(side=TOP, fill=X)
 
-        self.frameFutureExams = Frame(frameCenter, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.frameFutureExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.frameFutureExams.pack(side=TOP, fill=X)
+
+        self.canvasFuture = Canvas(self.frameFutureExams, height=198)
+        self.canvasFuture.pack(side=TOP, fill=X, expand=YES)
+
+        self.xscrollbarFuture = ttk.Scrollbar(self.frameFutureExams, orient=HORIZONTAL, command=self.canvasFuture.xview)
+        self.xscrollbarFuture.pack(side=TOP, fill=X)
+
+        self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
+        self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+
+        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
 
         examPList = Label(frameCenter, height=2, bg="#525252", text="Past Exams", fg="#FFFFFF")
         examPList.pack(side=TOP, fill=X)
 
-        self.framePastExams = Frame(frameCenter, height=250, width=1350, bg="#313131", relief=SUNKEN)
+        self.framePastExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.framePastExams.pack(side=TOP, fill=X)
 
-        self.examsS()
+        self.canvasPast = Canvas(self.framePastExams, height=198)
+        self.canvasPast.pack(side=TOP, fill=X, expand=YES)
+
+        self.xscrollbarPast = ttk.Scrollbar(self.framePastExams, orient=HORIZONTAL, command=self.canvasPast.xview)
+        self.xscrollbarPast.pack(side=TOP, fill=X)
+
+        self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
+        self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+
+        self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
+
+        self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
 
     def getIDfromMail(self, mail):
         result = db.child("students").order_by_child("email").equal_to(mail).get()
@@ -3459,11 +3644,14 @@ class CoursePageS(tk.Frame):
         futureExamsCount = 0
         f = ('Times', 30)
 
-        for widget in self.frameFutureExams.winfo_children():
+        for widget in self.secFrameFuture.winfo_children():
             widget.destroy()
 
-        for widget in self.framePastExams.winfo_children():
+        for widget in self.secFramePast.winfo_children():
             widget.destroy()
+
+        sizePast = 0
+        sizeFuture = 0
 
         for exam in examsofStudent:
             splitArrDur = str(exam[3]).split(sep=":")
@@ -3481,19 +3669,25 @@ class CoursePageS(tk.Frame):
 
             if endTime < datetime_Now:
                 pastExamsCount += 1
-                self.frameExam = Frame(self.framePastExams, height=200, width=250, bg="#414141", borderwidth=2,
+                self.frameExam = Frame(self.secFramePast, height=200, width=250, bg="#414141", borderwidth=2,
                                        relief=SUNKEN)
                 self.frameExam.pack(side=LEFT)
+                self.frameExam.place(x=sizePast, y=0)
+                sizePast += 251
 
                 self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
                 self.labelExamName.place(x=25, y=10)
 
                 self.labelExamType = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[4], fg="#FFFFFF")
-                self.labelExamType.place(x=25, y=60)
+                self.labelExamType.place(x=25, y=55)
 
                 self.labelExamDate = Label(self.frameExam, height=2, width=28, bg="#313131",
                                            text=str(exam[5] + " " + exam[6]), fg="#FFFFFF")
-                self.labelExamDate.place(x=25, y=110)
+                self.labelExamDate.place(x=25, y=100)
+
+                self.labelAttNum = Label(self.frameExam, height=2, width=28, bg="#313131",
+                                         text=str("Attempt:" + exam[1]), fg="#FFFFFF")
+                self.labelAttNum.place(x=25, y=145)
 
                 # self.buttonExam = Button(self.frameExam, text="Details", width=13, bg="#ca3e47", fg="#FFFFFF",
                 # command=lambda examID=exam[0]: self.openExamDetail(examID))
@@ -3501,9 +3695,11 @@ class CoursePageS(tk.Frame):
 
             else:
                 futureExamsCount += 1
-                self.frameExam = Frame(self.frameFutureExams, height=200, width=250, bg="#414141", borderwidth=2,
+                self.frameExam = Frame(self.secFrameFuture, height=200, width=250, bg="#414141", borderwidth=2,
                                        relief=SUNKEN)
                 self.frameExam.pack(side=LEFT)
+                self.frameExam.place(x=sizeFuture, y=0)
+                sizeFuture += 251
 
                 self.labelExamName = Label(self.frameExam, height=2, width=28, bg="#313131", text=exam[0], fg="#FFFFFF")
                 self.labelExamName.place(x=25, y=10)
@@ -3520,13 +3716,35 @@ class CoursePageS(tk.Frame):
                 self.buttonExam.place(x=75, y=160)
 
         if pastExamsCount == 0:
-            examNoPast = Label(self.framePastExams, height=4, bg="#414141", text="There are no finished exams",
-                               fg="#FFFFFF", font=f)
+            examNoPast = Label(self.secFramePast, height=5, width=50, bg="#414141",
+                               text="There are no finished exams", fg="#FFFFFF", font=f)
             examNoPast.pack(fill=X, expand=True)
+
+            self.xscrollbarPast.pack_forget()
+
+        else:
+            self.xscrollbarPast.pack(side=TOP, fill=X)
+
+            self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
+            self.canvasPast.bind('<Configure>',
+                                 lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+
         if futureExamsCount == 0:
-            examNoFuture = Label(self.frameFutureExams, height=4, bg="#414141", text="There are no upcoming exams",
-                                 fg="#FFFFFF", font=f)
-            examNoFuture.pack(fill=X, expand=True)
+            self.frameHeader.configure(height=110)
+
+            examNoFuture = Label(self.secFrameFuture, height=5, width=50, bg="#414141",
+                                 text="There are no upcoming exams", fg="#FFFFFF", font=f)
+            examNoFuture.pack(fill=X)
+
+            self.xscrollbarFuture.pack_forget()
+
+        else:
+            self.frameHeader.configure(height=95)
+            self.xscrollbarFuture.pack(side=TOP, fill=X)
+
+            self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
+            self.canvasFuture.bind('<Configure>',
+                                   lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
     def getExamDetailsOfCourse(self, courseID):
         examResult = db.child("exams").order_by_child("CourseID").equal_to(str(courseID)).get()
@@ -3575,9 +3793,14 @@ class ExamPageS(tk.Frame):
         global ExitButtonState
         ExitButtonState = False
 
+        global examPageInfo
+        examPageInfo = []
+
         def back():
             global ExitButtonState
             ExitButtonState = True
+            global examPageInfo
+            examPageInfo = []
             controller.get_frame(StudentMainPage).coursesS()
             controller.show_frame(StudentMainPage)
 
@@ -3587,6 +3810,55 @@ class ExamPageS(tk.Frame):
 
         buttonExit = Button(self, text="Exit Exam", command=back, fg="white", bg="#ca3e47", width=10)
         buttonExit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+
+        self.label = ttk.Label(
+            self,
+            text=self.time_string(),
+            font=('Digital-7', 40),
+            background="black",
+            foreground="red")
+
+        self.label.grid(row=20, column=60, columnspan=3, padx=10, pady=10)
+
+        self.label.after(1000, self.update)
+
+    def time_string(self):
+        global examPageInfo
+        temp = examPageInfo
+        # print("This is temp", temp)
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        if len(temp) != 0:
+            startTime = temp[0]
+            endTime = temp[1]
+            datetime_Now = datetime.now(tz_IN)
+            return str(endTime - datetime_Now)[0:-7]
+        else:
+            return time.strftime('%H:%M:%S')
+
+    def getExamInfoOnce(self):
+        examInfos = self.controller.get_frame(ExamDetailStudent).getExamInfo(self.controller.shared_data["selectedExam"])
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        splitArrDate = examInfos[2].split(sep="/")
+        splitArrTime = examInfos[3].split(sep=":")
+        startTime = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                             int(splitArrTime[0]), int(splitArrTime[1]))
+        startTime = startTime.replace(tzinfo=tz_IN)
+
+        splitArrDur = examInfos[1].split(sep=":")
+        lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+        tempDelta1 = timedelta(minutes=lenInMin)
+        endTime = startTime + tempDelta1
+
+        arr = [startTime, endTime, examInfos[4], examInfos[5]]
+        global examPageInfo
+        examPageInfo = arr
+
+    def update(self):
+        """ update the label every 1 second """
+        self.label.configure(text=self.time_string())
+        # schedule another timer
+        self.label.after(1000, self.update)
 
     def exam(self):
         global examAbbS
@@ -3714,24 +3986,23 @@ class ExamPageS(tk.Frame):
         if resultVidRec.val() is None:
             parent = Path(__file__).parent
             VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
-            path_on_cloudFürVid = examID + "/" + studentID + "/" + "Rec-1"
-            storage.child(path_on_cloudFürVid).put(VidPath)
+            path_on_cloudFurVid = examID + "/" + studentID + "/" + "Rec-1"
+            storage.child(path_on_cloudFurVid).put(VidPath)
 
-            data1 = {"PathToVid": path_on_cloudFürVid}
+            data1 = {"PathToVid": path_on_cloudFurVid}
             db.child("examEnroll").child(examID).child(studentID).child("VidRec").child("Rec-1").set(data1)
         else:
             numOfRec = 1 + len(list(resultVidRec.val()))
             parent = Path(__file__).parent
             VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
-            path_on_cloudFürVid = examID + "/" + studentID + "/" + "Rec-" + str(numOfRec)
-            storage.child(path_on_cloudFürVid).put(VidPath)
+            path_on_cloudFurVid = examID + "/" + studentID + "/" + "Rec-" + str(numOfRec)
+            storage.child(path_on_cloudFurVid).put(VidPath)
 
-            data1 = {"PathToVid": path_on_cloudFürVid}
+            data1 = {"PathToVid": path_on_cloudFurVid}
             db.child("examEnroll").child(examID).child(studentID).child("VidRec").child("Rec-" + str(numOfRec)).set(
                 data1)
 
         messagebox.showinfo("Exam Over", "Exam Over")
-        self.controller.get_frame(StudentMainPage).coursesS()
         self.controller.show_frame(StudentMainPage)
 
     def work(self, cap, faceEncoding, studentID, examID):
@@ -3905,7 +4176,7 @@ class ExamPageS(tk.Frame):
         parent = Path(__file__).parent
         VidPath = Path(parent, 'videoCap', 'MEST' + '.mp4').__str__()
         vid_cod = cv2.VideoWriter_fourcc(*'FMP4')
-        output = cv2.VideoWriter(VidPath, vid_cod, 3.0, (640, 480))
+        output = cv2.VideoWriter(VidPath, vid_cod, 5.0, (640, 480))
         tz_IN = pytz.timezone('Etc/GMT-3')
         while True:
             success, img = cap.read()
