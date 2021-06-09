@@ -150,29 +150,30 @@ class Login(tk.Frame):
             password.insert(0, "Password")
             controller.show_frame(TeacherRegister)
 
-        image = Image.open("images/FaceNetLogo.png")
+        image = Image.open("images/loginLogo.png")
+        image = image.resize((350, 150), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(image)
 
         logoLabel = Label(self, image=img, borderwidth=0)
         logoLabel.image = img
-        logoLabel.pack(side=TOP, padx=20, pady=20)
+        logoLabel.pack(side=TOP, pady=30)
 
-        welcome = Label(self, text=" SIGN IN ", height=2, bg="#414141", fg="#FFFFFF", font=('Times', 20))
-        welcome.pack(side=TOP, fill=X)
+        # welcome = Label(self, text=" SIGN IN ", height=2, bg="#414141", fg="#FFFFFF", font=('Times', 20))
+        # welcome.pack(side=TOP, fill=X)
 
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
-        emailL.place(x=290, y=220)
+        emailL.place(x=320, y=220)
 
-        email = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000",
+        email = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000",
                       textvariable=self.controller.shared_data["email"])
-        email.place(x=380, y=225)
+        email.place(x=410, y=225)
         email.insert(0, "Email")
 
         passwordL = Label(self, text="Password:", width=10, height=2, bg="#313131", fg="#FFFFFF")
-        passwordL.place(x=290, y=300)
+        passwordL.place(x=320, y=300)
 
-        password = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000", show="*")
-        password.place(x=380, y=305)
+        password = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000", show="*")
+        password.place(x=410, y=305)
         password.insert(0, "Password")
 
         refresh()
@@ -186,10 +187,10 @@ class Login(tk.Frame):
         myButton.place(x=485, y=370)
 
         buttonStudent = Button(self, text="Student Sign Up", command=backS, bg="#325288", fg="#FFFFFF", width=15)
-        buttonStudent.place(x=300, y=420)
+        buttonStudent.place(x=310, y=420)
 
         buttonTeacher = Button(self, text="Teacher Sign Up", command=backT, bg="#325288", fg="#FFFFFF", width=15)
-        buttonTeacher.place(x=630, y=420)
+        buttonTeacher.place(x=620, y=420)
 
 
 class StudentRegister(tk.Frame):
@@ -357,42 +358,42 @@ class StudentRegister(tk.Frame):
         nameL = Label(self, text="Name:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         nameL.place(x=280, y=135)
 
-        self.name = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        self.name = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         self.name.place(x=370, y=140)
         self.name.insert(0, "Name")
 
         surnameL = Label(self, text="Surname:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         surnameL.place(x=280, y=185)
 
-        self.surname = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        self.surname = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         self.surname.place(x=370, y=190)
         self.surname.insert(0, "Surname")
 
         sIDL = Label(self, text="Student ID:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         sIDL.place(x=280, y=235)
 
-        self.studentID = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        self.studentID = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         self.studentID.place(x=370, y=240)
         self.studentID.insert(0, "Student ID")
 
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         emailL.place(x=280, y=285)
 
-        email = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        email = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         email.place(x=370, y=290)
         email.insert(0, "Email")
 
         passL = Label(self, text="Password:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         passL.place(x=280, y=335)
 
-        password = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000", show='*')
+        password = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000", show='*')
         password.place(x=370, y=340)
         password.insert(0, "Password")
 
         passAL = Label(self, text="Password Again:", width=15, height=2, bg="#313131", fg="#FFFFFF")
         passAL.place(x=245, y=385)
 
-        passwordA = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000", show='*')
+        passwordA = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000", show='*')
         passwordA.place(x=370, y=390)
         passwordA.insert(0, "Password")
 
@@ -576,35 +577,35 @@ class TeacherRegister(tk.Frame):
         nameL = Label(self, text="Name:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         nameL.place(x=280, y=135)
 
-        name = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        name = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         name.place(x=370, y=140)
         name.insert(0, "Name")
 
         surnameL = Label(self, text="Surname:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         surnameL.place(x=280, y=185)
 
-        surname = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        surname = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         surname.place(x=370, y=190)
         surname.insert(0, "Surname")
 
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         emailL.place(x=280, y=235)
 
-        email = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        email = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         email.place(x=370, y=240)
         email.insert(0, "Email")
 
         passL = Label(self, text="Password:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         passL.place(x=280, y=285)
 
-        password = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000", show="*")
+        password = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000", show="*")
         password.place(x=370, y=290)
         password.insert(0, "Password")
 
         passAL = Label(self, text="Password Again:", width=15, height=2, bg="#313131", fg="#FFFFFF")
         passAL.place(x=245, y=335)
 
-        passwordA = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000", show="*")
+        passwordA = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000", show="*")
         passwordA.place(x=370, y=340)
         passwordA.insert(0, "Password")
 
@@ -643,7 +644,7 @@ class ForgotPassword(tk.Frame):
         emailL = Label(self, text="E-mail:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         emailL.place(x=280, y=145)
 
-        email = Entry(self, width=50, borderwidth=5, bg="#9fe6a0", fg="#000000")
+        email = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         email.place(x=370, y=150)
         email.insert(0, "Enter your email")
 
@@ -690,23 +691,23 @@ class TeacherMainPage(tk.Frame):
 
         buttonCC = Button(frameButtons, text="Create Course", command=lambda: controller.show_frame(CreateCourse),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCC.grid(row=0, column=1, columnspan=3, padx=10, pady=40)
+        buttonCC.grid(row=0, column=1, columnspan=3, padx=10, pady=36)
 
         buttonDC = Button(frameButtons, text="Delete Course", command=lambda: controller.show_frame(DeleteCourse),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonDC.grid(row=2, column=1, columnspan=3, padx=10, pady=40)
+        buttonDC.grid(row=2, column=1, columnspan=3, padx=10, pady=36)
 
         buttonCE = Button(frameButtons, text="Create Exam", command=self.createExam,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCE.grid(row=4, column=1, columnspan=3, padx=10, pady=40)
+        buttonCE.grid(row=4, column=1, columnspan=3, padx=10, pady=36)
 
         buttonDE = Button(frameButtons, text="Delete Exam", command=lambda: controller.show_frame(DeleteExam),
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonDE.grid(row=6, column=1, columnspan=3, padx=10, pady=40)
+        buttonDE.grid(row=6, column=1, columnspan=3, padx=10, pady=36)
 
         buttonER = Button(frameButtons, text="Exam Reports", command=self.openExamReportsPage,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonER.grid(row=8, column=1, columnspan=3, padx=10, pady=40)
+        buttonER.grid(row=8, column=1, columnspan=3, padx=10, pady=36)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
         # fg="#FFFFFF")
@@ -876,23 +877,23 @@ class StudentMainPage(tk.Frame):
         frameCenter.pack(side=TOP, fill=X)
 
         frameButtons = Frame(frameCenter, height=880, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
-        frameButtons.pack(side=LEFT)
+        frameButtons.pack(side=LEFT, fill=Y)
 
         buttonTF = Button(frameButtons, text="Test FaceRec", command=self.test,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonTF.grid(row=1, column=1, columnspan=3, padx=10, pady=40)
+        buttonTF.grid(row=1, column=1, columnspan=3, padx=10, pady=50)
 
         buttonTE = Button(frameButtons, text="Test EyeGaze", command=self.capture,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonTE.grid(row=3, column=1, columnspan=3, padx=10, pady=40)
+        buttonTE.grid(row=3, column=1, columnspan=3, padx=10, pady=50)
 
         buttonCP = Button(frameButtons, text="Change Picture", command=self.change,
                           width=13, bg="#ca3e47", fg="#FFFFFF")
-        buttonCP.grid(row=5, column=1, columnspan=3, padx=10, pady=40)
+        buttonCP.grid(row=5, column=1, columnspan=3, padx=10, pady=50)
 
         buttonCC = Button(frameButtons, text="Change Password", command=self.changePass,
                           width=15, bg="#ca3e47", fg="#FFFFFF")
-        buttonCC.grid(row=7, column=1, columnspan=3, padx=10, pady=40)
+        buttonCC.grid(row=7, column=1, columnspan=3, padx=10, pady=50)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
         # fg="#FFFFFF")
@@ -1329,14 +1330,14 @@ class CreateCourse(tk.Frame):
         courseNameL = Label(self, text="Course Name:", width=12, height=2, bg="#313131", fg="#FFFFFF")
         courseNameL.place(x=285, y=170)
 
-        courseNameE = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        courseNameE = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         courseNameE.place(x=400, y=175)
         courseNameE.insert(0, "Course Name")
 
         courseAbbL = Label(self, text="Course Abbreviation:", width=17, height=2, bg="#313131", fg="#FFFFFF")
         courseAbbL.place(x=250, y=240)
 
-        courseAbbE = Entry(self, width=50, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        courseAbbE = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
         courseAbbE.place(x=400, y=245)
         courseAbbE.insert(0, "Course Abbreviation")
 
@@ -2151,7 +2152,7 @@ class CourseDetailPage(tk.Frame):
         studentIDL = Label(frameRight, text="Student ID:", width=10, height=2, bg="#313131", fg="#FFFFFF")
         studentIDL.place(x=25, y=126)
 
-        studentID = Entry(frameRight, width=30, borderwidth=5, bg="#72A4D2", fg="#FFFFFF")
+        studentID = Entry(frameRight, width=30, borderwidth=5, bg="#FFFFFF", fg="#000000")
         studentID.place(x=120, y=130)
 
         buttonAddS = Button(frameRight, text="Add", width=13, bg="#ca3e47", fg="#FFFFFF", command=addOne)
@@ -2287,7 +2288,7 @@ class ExamDetailPage(tk.Frame):
         self.frameRight = Frame(frameCenter, height=500, width=725, bg="#414141", borderwidth=2, relief=SUNKEN)
         self.frameRight.pack(side=LEFT, fill=X)
 
-        examDateL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Date:", fg="#FFFFFF", font=s)
+        examDateL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Date:", fg="#FFFFFF", font=s)
         examDateL.place(x=30, y=30)
 
         today = date.today()
@@ -2295,9 +2296,9 @@ class ExamDetailPage(tk.Frame):
 
         self.startDateE = Calendar(self.frameRight, selectmode='day', year=today.year, month=today.month, day=today.day,
                                    date_pattern='dd/mm/yy')
-        self.startDateE.place(x=30, y=120)
+        self.startDateE.place(x=30, y=115)
 
-        examTimeL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Time:", fg="#FFFFFF", font=s)
+        examTimeL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Time:", fg="#FFFFFF", font=s)
         examTimeL.place(x=350, y=30)
 
         self.hour_string_time = StringVar()
@@ -2326,21 +2327,21 @@ class ExamDetailPage(tk.Frame):
         self.examDurMin = Spinbox(self.frameRight, from_=0, to=59, wrap=True, textvariable=self.min_string_dur, font=f,
                                   width=2, justify=CENTER)
 
-        self.examTimeHour.place(x=350, y=120)
-        self.examTimeMinutes.place(x=400, y=120)
+        self.examTimeHour.place(x=405, y=115)
+        self.examTimeMinutes.place(x=455, y=115)
 
-        examDurL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Duration:", fg="#FFFFFF", font=s)
+        examDurL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Duration:", fg="#FFFFFF", font=s)
         examDurL.place(x=30, y=320)
 
-        self.examDurHour.place(x=30, y=410)
-        self.examDurMin.place(x=80, y=410)
+        self.examDurHour.place(x=85, y=405)
+        self.examDurMin.place(x=135, y=405)
 
-        examAtL = Label(self.frameRight, width=20, height=3, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF", font=s)
+        examAtL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF", font=s)
         examAtL.place(x=350, y=320)
 
         self.examAttemptNum = Spinbox(self.frameRight, from_=1, to=10, wrap=True, width=2, state="readonly",
                                       textvariable=self.attemptNum, font=f, justify=CENTER)
-        self.examAttemptNum.place(x=350, y=410)
+        self.examAttemptNum.place(x=430, y=405)
 
         buttonUpdate = Button(self.frameRight, text="Update", width=13, bg="#ca3e47", fg="#FFFFFF",
                               command=self.checkPassed)
@@ -2961,7 +2962,7 @@ class ExamReports(tk.Frame):
         self.trv2.column("#1", minwidth=0, width=205)
         self.trv2.heading('#2', text="Time Stamp")
         self.trv2.column("#2", minwidth=0, width=205)
-        self.trv2.heading('#3', text="Value")
+        self.trv2.heading('#3', text="Category/State")
         self.trv2.column("#3", minwidth=0, width=205)
 
         yscrollbar = ttk.Scrollbar(tabs2, orient="vertical", command=self.trv2.yview)
@@ -2986,11 +2987,11 @@ class ExamReports(tk.Frame):
         self.trv3.column("#0", minwidth=0, width=80)
         self.trv3.heading('#1', text="EyeGaze Code")
         self.trv3.column("#1", minwidth=0, width=180)
-        self.trv3.heading('#2', text="Duration")
+        self.trv3.heading('#2', text="Duration (seconds)")
         self.trv3.column("#2", minwidth=0, width=130)
-        self.trv3.heading('#3', text="End Time")
+        self.trv3.heading('#3', text="Start Time")
         self.trv3.column("#3", minwidth=0, width=130)
-        self.trv3.heading('#4', text="Start Time")
+        self.trv3.heading('#4', text="End Time")
         self.trv3.column("#4", minwidth=0, width=180)
 
         yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
@@ -3276,7 +3277,7 @@ class ExamReports(tk.Frame):
                         timestampCol.append(a.val()[b]["TimeStamp"])
                     else:
                         timestampCol.append("-")
-                    categoryCol.append(a.key())
+                    categoryCol.append(a.val()[b]["Status"])
             if a.key() == "Solditute":
                 for b in a.val():
                     eventNameCol.append(b)
@@ -3291,25 +3292,33 @@ class ExamReports(tk.Frame):
 
     def getEyeGazeReport(self, examID, studentID):
         result = db.child("examEnroll").child(examID).child(studentID).get()
-
+        # print(result.val())
         namesCol = []
         finalArr = []
         durationCol = []
         endedCol = []
         startedCol = []
+        alertCol = []
 
         for a in result:
-            if (a.key() == "EyeGaze"):
+            if a.key() == "EyeGaze":
                 for b in a.val():
                     namesCol.append(b)
                     durationCol.append(a.val()[b]['Duration'])
                     endedCol.append(a.val()[b]['Ended'])
                     startedCol.append(a.val()[b]['Started'])
+                    alertCol.append(int(a.val()[b]['Alert']))
 
-        finalArr.append(namesCol)
-        finalArr.append(durationCol)
-        finalArr.append(endedCol)
-        finalArr.append(startedCol)
+        sortNameCol = [x for _, x in sorted(zip(alertCol, namesCol))]
+        sortStartCol = [x for _, x in sorted(zip(alertCol, startedCol))]
+        sortEndedCol = [x for _, x in sorted(zip(alertCol, endedCol))]
+        sortDurCol = [x for _, x in sorted(zip(alertCol, durationCol))]
+
+        finalArr.append(sortNameCol)
+        finalArr.append(sortDurCol)
+        finalArr.append(sortStartCol)
+        finalArr.append(sortEndedCol)
+
         # print(finalArr)
         return finalArr
 
@@ -3402,14 +3411,14 @@ class ExamDetailStudent(tk.Frame):
         f = ('Times', 16)
         s = ('Times', 14)
 
-        self.examAbbLabel = Label(frameHeader, height=5, width=20, bg="#313131", textvariable=examAbbS, fg="#FFFFFF", font =f)
-        self.examAbbLabel.pack(side=LEFT)
+        self.examAbbLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examAbbS, fg="#FFFFFF", font =f)
+        self.examAbbLabel.place(x=10, y=10)
 
-        examTypeLabel = Label(frameHeader, height=5, width=20, bg="#313131", textvariable=examTypeS, fg="#FFFFFF", font=f)
-        examTypeLabel.pack(side=LEFT)
+        examTypeLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examTypeS, fg="#FFFFFF", font=f)
+        examTypeLabel.place(x=200, y=10)
 
         backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
-        backButton.pack(side=RIGHT)
+        backButton.place(x=925, y=35)
 
         frameCenter = Frame(self, width=1350, relief=RIDGE, bg="#414141", height=680)
         frameCenter.pack(side=TOP, fill=X)
@@ -3642,7 +3651,7 @@ class CoursePageS(tk.Frame):
         courseAbbLabel.place(x=10, y=10)
 
         courseNameLabel = Label(self.frameHeader, height=3, width=30, bg="#313131", textvariable=courseName, fg="#FFFFFF", font=f)
-        courseNameLabel.place(x=180, y=10)
+        courseNameLabel.place(x=200, y=10)
 
         backButton = Button(self.frameHeader, text="Back", command=back, width=10, bg="#fed049")
         backButton.place(x=925, y=35)
