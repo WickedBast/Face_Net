@@ -352,7 +352,8 @@ class StudentRegister(tk.Frame):
             passwordA.insert(0, "Password")
             controller.show_frame(Login)
 
-        welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=4, bg="#414141", fg="#FFFFFF", font=('Times', 20))
+        welcome = Label(self, text=" STUDENT SIGN UP ", width=150, height=4, bg="#414141", fg="#FFFFFF",
+                        font=('Times', 20))
         welcome.pack(fill=X, side=TOP)
 
         nameL = Label(self, text="Name:", width=10, height=2, bg="#313131", fg="#FFFFFF")
@@ -571,7 +572,8 @@ class TeacherRegister(tk.Frame):
             passwordA.insert(0, "Password")
             controller.show_frame(Login)
 
-        welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=4, bg="#414141", fg="#FFFFFF", font=('Times', 20))
+        welcome = Label(self, text=" TEACHER SIGN UP ", width=150, height=4, bg="#414141", fg="#FFFFFF",
+                        font=('Times', 20))
         welcome.pack(fill=X, side=TOP)
 
         nameL = Label(self, text="Name:", width=10, height=2, bg="#313131", fg="#FFFFFF")
@@ -1727,47 +1729,14 @@ class CreateExam(tk.Frame):
         mainFrame = Frame(self, height=600, width=1050, bg="#414141", padx=20, relief=SUNKEN)
         mainFrame.pack(side=TOP)
 
-        welcome = Label(mainFrame, text=" CREATE EXAM ", width=150, height=5, bg="#414141", fg="#FFFFFF", font=('Times', 20))
-        welcome.pack(side=TOP)
-
-        leftL = Frame(mainFrame, height=350, width=200, bg="#414141", relief=SUNKEN)
-        leftL.pack(side=LEFT)
-
-        firstL = Frame(leftL, height=100, width=100, bg="#414141")
-        firstL.pack(fill=BOTH)
-
-        courseL = Label(firstL, text="Select Course:", width=12, height=2, bg="#313131", fg="#FFFFFF")
-        courseL.pack(pady=10, side=LEFT, expand=True)
+        welcome = Label(mainFrame, text=" CREATE EXAM ", width=150, height=5, bg="#414141", fg="#FFFFFF",
+                        font=('Times', 20))
+        welcome.pack(side=TOP, fill=X)
 
         courses = []
 
-        self.courseAbbC = ttk.Combobox(firstL, values=courses, state='readonly', width=20, postcommand=self.getCourses)
-        self.courseAbbC.pack(pady=10, side=LEFT)
-
-        secondL = Frame(leftL, height=100, width=100, bg="#414141")
-        secondL.pack(fill=BOTH)
-
-        examL = Label(secondL, text="Select Exam Type:", width=15, height=2, bg="#313131", fg="#FFFFFF")
-        examL.pack(pady=10, side=LEFT, expand=True)
-
-        self.examID = ttk.Combobox(secondL, state='readonly', width=20, postcommand=self.examIDCon)
-        self.examID.pack(pady=10, side=LEFT)
-
-        rightL = Frame(mainFrame, height=450, width=200, bg="#414141", relief=SUNKEN)
-        rightL.pack(side=RIGHT)
-
-        firstR = Frame(rightL, height=300, width=300, bg="#414141")
-        firstR.pack(fill=BOTH)
-
-        dateL = Label(firstR, text="Select Exam Date:", width=15, height=2, bg="#313131", fg="#FFFFFF")
-        dateL.pack(pady=10, side=LEFT, expand=True)
-
         today = date.today()
         now = datetime.now()
-
-        startDate = Calendar(firstR, selectmode='day', year=today.year, month=today.month, day=today.day,
-                             date_pattern='dd/mm/yy')
-        startDate.pack(side=LEFT)
 
         hour_string = StringVar()
         min_string = StringVar()
@@ -1775,48 +1744,65 @@ class CreateExam(tk.Frame):
         min_d_string = StringVar()
         f = ('Times', 20)
 
-        secondR = Frame(rightL, height=200, width=100, bg="#414141")
-        secondR.pack(fill=BOTH)
+        courseL = Label(self, text="Select Course:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        courseL.place(x=100, y=150)
 
-        timeL = Label(secondR, text="Select Exam Time:", width=15, height=2, bg="#313131", fg="#FFFFFF")
-        timeL.pack(pady=10, side=LEFT, expand=True)
+        self.courseAbbC = ttk.Combobox(self, values=courses, state='readonly', width=20, postcommand=self.getCourses)
+        self.courseAbbC.place(x=290, y=155)
 
-        min_sb = Spinbox(secondR, from_=8, to=23, wrap=True, textvariable=hour_string, width=2, state="readonly",
+        examL = Label(self, text="Select Exam Type:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        examL.place(x=100, y=240)
+
+        self.examID = ttk.Combobox(self, state='readonly', width=20, postcommand=self.examIDCon)
+        self.examID.place(x=290, y=245)
+
+        durL = Label(self, text="Select Duration:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        durL.place(x=100, y=330)
+
+        hour_dur = Spinbox(self, from_=0, to=9, wrap=True, textvariable=hour_d_string, width=2, state="readonly",
+                           font=f, justify=CENTER)
+        min_dur = Spinbox(self, from_=0, to=59, wrap=True, textvariable=min_d_string, font=f, width=2, justify=CENTER)
+
+        hour_dur.place(x=310, y=330)
+        min_dur.place(x=360, y=330)
+        # hour_dur.pack(side=LEFT, fill=X, expand=True)
+        # min_dur.pack(side=LEFT, fill=X, expand=True)
+
+        ateL = Label(self, text="Select Attempt Number:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        ateL.place(x=100, y=420)
+
+        attemptNum = Spinbox(self, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER)
+        attemptNum.place(x=330, y=420)
+
+        dateL = Label(self, text="Select Exam Date:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        dateL.place(x=520, y=150)
+
+        startDate = Calendar(self, selectmode='day', year=today.year, month=today.month, day=today.day,
+                             date_pattern='dd/mm/yy')
+        startDate.place(x=700, y=150)
+
+        timeL = Label(self, text="Select Exam Time:", width=20, height=2, bg="#313131", fg="#FFFFFF")
+        timeL.place(x=520, y=420)
+
+        min_sb = Spinbox(self, from_=8, to=23, wrap=True, textvariable=hour_string, width=2, state="readonly",
                          font=f, justify=CENTER)
-        sec_hour = Spinbox(secondR, from_=0, to=59, wrap=True, textvariable=min_string, font=f, width=2, justify=CENTER)
+        sec_hour = Spinbox(self, from_=0, to=59, wrap=True, textvariable=min_string, font=f, width=2, justify=CENTER)
+
         hour_string.set(int(now.hour))
         min_string.set(int(now.minute))
-        min_sb.pack(side=LEFT, fill=X, expand=True)
-        sec_hour.pack(side=LEFT, fill=X, expand=True)
 
-        thirdL = Frame(leftL, height=200, width=100, bg="#414141")
-        thirdL.pack(fill=BOTH)
+        min_sb.place(x=780, y=420)
+        sec_hour.place(x=830, y=420)
 
-        durL = Label(thirdL, text="Select Duration (Hour/Minute):", width=25, height=2, bg="#313131", fg="#FFFFFF")
-        durL.pack(pady=10, side=LEFT, expand=True)
-
-        hour_dur = Spinbox(thirdL, from_=0, to=9, wrap=True, textvariable=hour_d_string, width=2, state="readonly",
-                           font=f, justify=CENTER)
-        min_dur = Spinbox(thirdL, from_=0, to=59, wrap=True, textvariable=min_d_string, font=f, width=2, justify=CENTER)
-
-        hour_dur.pack(side=LEFT, fill=X, expand=True)
-        min_dur.pack(side=LEFT, fill=X, expand=True)
-
-        forthL = Frame(leftL, height=200, width=100, bg="#414141")
-        forthL.pack(fill=BOTH)
-
-        ateL = Label(forthL, text="Select Attempt Number:", width=20, height=2, bg="#313131", fg="#FFFFFF")
-        ateL.pack(pady=10, side=LEFT, expand=True)
-
-        attemptNum = Spinbox(forthL, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER)
-        attemptNum.pack(pady=10)
+        # min_sb.pack(side=LEFT, fill=X, expand=True)
+        # sec_hour.pack(side=LEFT, fill=X, expand=True)
 
         backButton = Button(self, text="Back", command=back,
                             width=10, bg="#fed049")
-        backButton.pack(pady=10)
+        backButton.place(x=250, y=500)
 
         buttonSubmit = Button(self, text="Create", width=13, bg="#ca3e47", fg="#FFFFFF", command=create_Exam)
-        buttonSubmit.pack(pady=10)
+        buttonSubmit.place(x=650, y=500)
 
     def getCourses(self):
         result = db.child("courses").order_by_child("TeacherMail").equal_to(
@@ -1934,52 +1920,54 @@ class DeleteExam(tk.Frame):
     def deleteExamDataOfStudent(self, examID, studentID):
         bucket = admin_storage.bucket()
         result = db.child("examEnroll").child(examID).child(studentID).get()
-        # print(result.val())
-        for a in result:
-            # part for attempts
-            if a.key() == "Attempts":
-                # print(a.val())
-                # print(a.val()["Attempt-1"])
-                for b in a.val():
-                    # print(b)
-                    # print(a.val()[b]["PathToImg"])
-                    blob = bucket.blob(a.val()[b]["PathToImg"])
-                    blob.delete()
-            # part for FrChecks
-            elif a.key() == "FrChecks":
-                # print(a.val())
 
-                for b in a.val():
-                    # print(b)
-                    # print(a.val()[b]["PathToImg"])
-                    if (a.val()[b]["PathToImg"] != ""):
+        if result.val() != None:
+            for a in result:
+                # part for attempts
+                if a.key() == "Attempts":
+                    # print(a.val())
+                    # print(a.val()["Attempt-1"])
+                    for b in a.val():
+                        # print(b)
+                        # print(a.val()[b]["PathToImg"])
                         blob = bucket.blob(a.val()[b]["PathToImg"])
                         blob.delete()
-            # part for Solditute
-            elif a.key() == "Solditute":
-                # print(a.val())
-                # print(a.val()["Attempt-1"])
-                for b in a.val():
-                    # print(b)
-                    # print(a.val()[b]["PathToImg"])
-                    blob = bucket.blob(a.val()[b]["PathToImg"])
-                    blob.delete()
-            elif a.key() == "VidRec":
-                # print(a.val())
-                # print(a.val()["Attempt-1"])
-                for b in a.val():
-                    # print(b)
-                    # print(a.val()[b]["PathToImg"])
-                    blob = bucket.blob(a.val()[b]["PathToVid"])
-                    blob.delete()
+                # part for FrChecks
+                elif a.key() == "FrChecks":
+                    print(a.val())
+
+                    for b in a.val():
+                        # print(b)
+                        # print(a.val()[b]["PathToImg"])
+                        if (a.val()[b]["PathToImg"] != ""):
+                            blob = bucket.blob(a.val()[b]["PathToImg"])
+                            blob.delete()
+                # part for Solditute
+                elif a.key() == "Solditute":
+                    # print(a.val())
+                    # print(a.val()["Attempt-1"])
+                    for b in a.val():
+                        # print(b)
+                        # print(a.val()[b]["PathToImg"])
+                        blob = bucket.blob(a.val()[b]["PathToImg"])
+                        blob.delete()
+                elif a.key() == "VidRec":
+                    # print(a.val())
+                    # print(a.val()["Attempt-1"])
+                    for b in a.val():
+                        # print(b)
+                        # print(a.val()[b]["PathToImg"])
+                        blob = bucket.blob(a.val()[b]["PathToVid"])
+                        blob.delete()
 
     def deleteExamDataOfAllStudents(self, examID):
         result = db.child("examEnroll").child(examID).get()
-
-        for student in result:
-            # print(student.key())
-            self.deleteExamDataOfStudent(examID, student.key())
-        db.child("examEnroll").child(examID).remove()
+        if result.val() != None:
+            for student in result:
+                # print(student.key())
+                self.deleteExamDataOfStudent(examID, student.key())
+            db.child("examEnroll").child(examID).remove()
+        db.child("exams").child(examID).remove()
 
 
 class CourseDetailPage(tk.Frame):
@@ -2084,10 +2072,12 @@ class CourseDetailPage(tk.Frame):
 
         f = ('Times', 16)
 
-        self.courseAbbLabel = Label(frameHeader, height=3, width=15, bg="#313131", textvariable=courseAbb, fg="#FFFFFF", font=f)
+        self.courseAbbLabel = Label(frameHeader, height=3, width=15, bg="#313131", textvariable=courseAbb, fg="#FFFFFF",
+                                    font=f)
         self.courseAbbLabel.place(x=10, y=10)
 
-        courseNameLabel = Label(frameHeader, height=3, width=25, bg="#313131", textvariable=courseName, fg="#FFFFFF", font=f)
+        courseNameLabel = Label(frameHeader, height=3, width=25, bg="#313131", textvariable=courseName, fg="#FFFFFF",
+                                font=f)
         courseNameLabel.place(x=200, y=10)
 
         backButton = Button(frameHeader, text="Back", command=back, width=10,
@@ -2245,10 +2235,12 @@ class ExamDetailPage(tk.Frame):
         f = ('Times', 16)
         s = ('Times', 14)
 
-        self.examAbbLabel = Label(frameHeader, height=4, width=20, bg="#313131", textvariable=examAbb, fg="#FFFFFF", font=f)
+        self.examAbbLabel = Label(frameHeader, height=4, width=20, bg="#313131", textvariable=examAbb, fg="#FFFFFF",
+                                  font=f)
         self.examAbbLabel.pack(side=LEFT)
 
-        examTypeLabel = Label(frameHeader, height=4, width=20, bg="#313131", textvariable=examType, fg="#FFFFFF", font=f)
+        examTypeLabel = Label(frameHeader, height=4, width=20, bg="#313131", textvariable=examType, fg="#FFFFFF",
+                              font=f)
         examTypeLabel.pack(side=LEFT)
 
         backButton = Button(frameHeader, text="Back", command=back, width=10,
@@ -2276,13 +2268,16 @@ class ExamDetailPage(tk.Frame):
         examDurLOld = Label(frameLeft, width=18, height=2, bg="#313131", text="Exam Duration:", fg="#FFFFFF", font=s)
         examDurLOld.place(x=20, y=250)
 
-        labelExamName = Label(frameLeft, height=2, width=10, bg="#313131", textvariable=examDuration, fg="#FFFFFF", font=s)
+        labelExamName = Label(frameLeft, height=2, width=10, bg="#313131", textvariable=examDuration, fg="#FFFFFF",
+                              font=s)
         labelExamName.place(x=205, y=250)
 
-        examAtLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF", font=s)
+        examAtLOld = Label(frameLeft, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF",
+                           font=s)
         examAtLOld.place(x=20, y=350)
 
-        labelExamName = Label(frameLeft, height=2, width=8, bg="#313131", textvariable=examAttempt, fg="#FFFFFF", font=s)
+        labelExamName = Label(frameLeft, height=2, width=8, bg="#313131", textvariable=examAttempt, fg="#FFFFFF",
+                              font=s)
         labelExamName.place(x=225, y=350)
 
         self.frameRight = Frame(frameCenter, height=500, width=725, bg="#414141", borderwidth=2, relief=SUNKEN)
@@ -2336,7 +2331,8 @@ class ExamDetailPage(tk.Frame):
         self.examDurHour.place(x=85, y=405)
         self.examDurMin.place(x=135, y=405)
 
-        examAtL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF", font=s)
+        examAtL = Label(self.frameRight, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF",
+                        font=s)
         examAtL.place(x=350, y=320)
 
         self.examAttemptNum = Spinbox(self.frameRight, from_=1, to=10, wrap=True, width=2, state="readonly",
@@ -2620,10 +2616,12 @@ class TeacherCoursePage(tk.Frame):
         self.frameHeader = Frame(self, height=95, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         self.frameHeader.pack(side=TOP, fill=X)
 
-        courseAbbLabel = Label(self.frameHeader, height=3, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF", font=f)
+        courseAbbLabel = Label(self.frameHeader, height=3, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF",
+                               font=f)
         courseAbbLabel.place(x=10, y=10)
 
-        courseNameLabel = Label(self.frameHeader, height=3, width=30, bg="#313131", textvariable=courseName, fg="#FFFFFF", font=f)
+        courseNameLabel = Label(self.frameHeader, height=3, width=30, bg="#313131", textvariable=courseName,
+                                fg="#FFFFFF", font=f)
         courseNameLabel.place(x=200, y=10)
 
         backButton = Button(self.frameHeader, text="Back", command=back, width=10, bg="#fed049")
@@ -2645,7 +2643,8 @@ class TeacherCoursePage(tk.Frame):
         self.xscrollbarFuture.pack(side=TOP, fill=X)
 
         self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
-        self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+        self.canvasFuture.bind('<Configure>',
+                               lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
         self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
 
@@ -2664,7 +2663,8 @@ class TeacherCoursePage(tk.Frame):
         self.xscrollbarPast.pack(side=TOP, fill=X)
 
         self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
-        self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+        self.canvasPast.bind('<Configure>',
+                             lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
 
         self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
 
@@ -2754,7 +2754,7 @@ class TeacherCoursePage(tk.Frame):
 
         if pastExamsCount == 0:
             self.examNoPast = Label(self.secFramePast, height=5, width=50, bg="#414141",
-                               text="There are no finished exams", fg="#FFFFFF", font=f)
+                                    text="There are no finished exams", fg="#FFFFFF", font=f)
             self.examNoPast.pack(fill=X, expand=True)
 
             self.xscrollbarPast.pack_forget()
@@ -3023,6 +3023,8 @@ class ExamReports(tk.Frame):
         self.selectedPath.place(x=8, y=90)
 
         self.buttons()
+        global downloadState
+        downloadState = False
 
     def addCourses(self):
         result = db.child("courses").order_by_child("TeacherMail").equal_to(
@@ -3231,8 +3233,16 @@ class ExamReports(tk.Frame):
         try:
             rowStudentID = self.getrow()
             courseIDS = str(self.coursesExamRepE.get()).split("/")
-            self.downloadFilesOfStudent(self.selectedPath.cget("text"), courseIDS[0], rowStudentID)
-            messagebox.showinfo("Media Downloaded", "Execution completed")
+            tDown = Thread(target=self.downloadFilesOfStudent,
+                           args=[self.selectedPath.cget("text"), courseIDS[0], rowStudentID])
+            tDown.start()
+
+            self.monitor(tDown)
+            self.refreshingBox()
+
+            # self.downloadFilesOfStudent(self.selectedPath.cget("text"), courseIDS[0], rowStudentID)
+            global downloadState
+            downloadState = False
         except:
             messagebox.showerror("Empty Student", "Student not selected")
 
@@ -3245,8 +3255,16 @@ class ExamReports(tk.Frame):
     def downloadAllMedia(self):
         courseIDS = str(self.coursesExamRepE.get()).split("/")
 
-        self.downloadAllStudents(self.selectedPath.cget("text"), courseIDS[0])
-        messagebox.showinfo("Media Files Downloaded", "Execution completed")
+        tDown = Thread(target=self.downloadAllStudents,
+                       args=[self.selectedPath.cget("text"), courseIDS[0]])
+        tDown.start()
+
+        self.monitor(tDown)
+        self.refreshingBox()
+
+        # self.downloadFilesOfStudent(self.selectedPath.cget("text"), courseIDS[0], rowStudentID)
+        global downloadState
+        downloadState = False
 
     def downloadAllStudents(self, folderPath, examID):
         folderpath1 = Path(f"{folderPath}", examID).__str__()
@@ -3374,6 +3392,22 @@ class ExamReports(tk.Frame):
         except:
             messagebox.showerror("Empty Student", "Select a Student")
 
+    def monitor(self, download_thread):
+        """ Monitor the download thread """
+        if download_thread.is_alive():
+            self.after(100, lambda: self.monitor(download_thread))
+        else:
+            global downloadState
+            downloadState = True
+
+    def refreshingBox(self):
+        global downloadState
+        if downloadState == False:
+            messagebox.showinfo("Please Wait", f"Files are being downloaded.\nPlease press OK after a few secs.")
+            self.after(100, self.refreshingBox())
+        else:
+            messagebox.showinfo("Media Downloaded", "Downloaded files can be found in your selected path.")
+
 
 # STUDENT PAGES
 
@@ -3411,10 +3445,12 @@ class ExamDetailStudent(tk.Frame):
         f = ('Times', 16)
         s = ('Times', 14)
 
-        self.examAbbLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examAbbS, fg="#FFFFFF", font =f)
+        self.examAbbLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examAbbS, fg="#FFFFFF",
+                                  font=f)
         self.examAbbLabel.place(x=10, y=10)
 
-        examTypeLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examTypeS, fg="#FFFFFF", font=f)
+        examTypeLabel = Label(frameHeader, height=3, width=20, bg="#313131", textvariable=examTypeS, fg="#FFFFFF",
+                              font=f)
         examTypeLabel.place(x=200, y=10)
 
         backButton = Button(frameHeader, text="Back", command=back, width=10, bg="#fed049")
@@ -3426,37 +3462,44 @@ class ExamDetailStudent(tk.Frame):
         examNameLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Name:", fg="#FFFFFF", font=s)
         examNameLS.place(x=150, y=60)
 
-        labelExamNameS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAbbS, fg="#FFFFFF", font=s)
+        labelExamNameS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAbbS, fg="#FFFFFF",
+                               font=s)
         labelExamNameS.place(x=345, y=60)
 
         examTypeLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Type:", fg="#FFFFFF", font=s)
         examTypeLS.place(x=550, y=60)
 
-        labelExamTypeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTypeS, fg="#FFFFFF", font=s)
+        labelExamTypeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTypeS, fg="#FFFFFF",
+                               font=s)
         labelExamTypeS.place(x=745, y=60)
 
         examDateLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Date:", fg="#FFFFFF", font=s)
         examDateLS.place(x=150, y=160)
 
-        labelExamDateS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDateS, fg="#FFFFFF", font=s)
+        labelExamDateS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDateS, fg="#FFFFFF",
+                               font=s)
         labelExamDateS.place(x=345, y=160)
 
         examTimeLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Time:", fg="#FFFFFF", font=s)
         examTimeLS.place(x=550, y=160)
 
-        labelExamTimeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTimeS, fg="#FFFFFF", font=s)
+        labelExamTimeS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examTimeS, fg="#FFFFFF",
+                               font=s)
         labelExamTimeS.place(x=745, y=160)
 
         examDurLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Duration:", fg="#FFFFFF", font=s)
         examDurLS.place(x=150, y=260)
 
-        labelExamDurS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDurationS, fg="#FFFFFF", font=s)
+        labelExamDurS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examDurationS, fg="#FFFFFF",
+                              font=s)
         labelExamDurS.place(x=345, y=260)
 
-        examAtLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF", font=s)
+        examAtLS = Label(frameCenter, width=20, height=2, bg="#313131", text="Exam Attempt Number:", fg="#FFFFFF",
+                         font=s)
         examAtLS.place(x=550, y=260)
 
-        labelExamAtS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAttemptS, fg="#FFFFFF", font=s)
+        labelExamAtS = Label(frameCenter, height=2, width=15, bg="#313131", textvariable=examAttemptS, fg="#FFFFFF",
+                             font=s)
         labelExamAtS.place(x=745, y=260)
 
         buttonExam = Button(frameCenter, text="Enter", width=13, bg="#ca3e47", fg="#FFFFFF", command=self.enterExam)
@@ -3621,6 +3664,7 @@ class ExamDetailStudent(tk.Frame):
                     "Attempt-" + str(1 + len(resultExamEn.val()))).set(data1)
 
             self.controller.get_frame(ExamPageS).getExamInfoOnce()
+            self.controller.get_frame(ExamPageS).exam()
             self.controller.show_frame(ExamPageS)
 
         cap.release()
@@ -3647,10 +3691,12 @@ class CoursePageS(tk.Frame):
         self.frameHeader = Frame(self, height=95, bg="#313131", padx=20, relief=SUNKEN, borderwidth=2)
         self.frameHeader.pack(side=TOP, fill=X)
 
-        courseAbbLabel = Label(self.frameHeader, height=3, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF", font=f)
+        courseAbbLabel = Label(self.frameHeader, height=3, width=20, bg="#313131", textvariable=courseAbb, fg="#FFFFFF",
+                               font=f)
         courseAbbLabel.place(x=10, y=10)
 
-        courseNameLabel = Label(self.frameHeader, height=3, width=30, bg="#313131", textvariable=courseName, fg="#FFFFFF", font=f)
+        courseNameLabel = Label(self.frameHeader, height=3, width=30, bg="#313131", textvariable=courseName,
+                                fg="#FFFFFF", font=f)
         courseNameLabel.place(x=200, y=10)
 
         backButton = Button(self.frameHeader, text="Back", command=back, width=10, bg="#fed049")
@@ -3672,7 +3718,8 @@ class CoursePageS(tk.Frame):
         self.xscrollbarFuture.pack(side=TOP, fill=X)
 
         self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
-        self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+        self.canvasFuture.bind('<Configure>',
+                               lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
         self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
 
@@ -3691,7 +3738,8 @@ class CoursePageS(tk.Frame):
         self.xscrollbarPast.pack(side=TOP, fill=X)
 
         self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
-        self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+        self.canvasPast.bind('<Configure>',
+                             lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
 
         self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
 
@@ -3869,20 +3917,55 @@ class ExamPageS(tk.Frame):
         global examPageInfo
         examPageInfo = []
 
+        global uploadState
+        uploadState = False
+
         def back():
             global ExitButtonState
             ExitButtonState = True
             global examPageInfo
             examPageInfo = []
+            global examAbbS
+            stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(self.controller.shared_data["email"].get())
+            t1Up = Thread(target=self.uploadVid, args=[examAbbS.get(), stuID])
+            t1Up.start()
+            self.refreshingBox()
             controller.get_frame(StudentMainPage).coursesS()
             controller.show_frame(StudentMainPage)
 
-        buttonStart = Button(self, text="Start Exam", command=self.exam, fg="white",
-                             bg="#ca3e47", width=10)
-        buttonStart.grid(row=7, column=1, columnspan=3, padx=10, pady=10)
+        s = ('Times', 14)
+
+        global staExTime
+        staExTime = tk.StringVar()
+        global enExTime
+        enExTime = tk.StringVar()
+        global atNum
+        atNum = tk.StringVar()
+
+        examTimeLS = Label(self, width=20, height=2, bg="#313131", text="Exam Start Time:", fg="#FFFFFF", font=s)
+        examTimeLS.place(x=350, y=200)
+
+        labelExamTimeS = Label(self, height=2, width=15, bg="#313131", textvariable=staExTime, fg="#FFFFFF",
+                               font=s)
+        labelExamTimeS.place(x=550, y=200)
+
+        examDurLS = Label(self, width=20, height=2, bg="#313131", text="Exam End Time:", fg="#FFFFFF", font=s)
+        examDurLS.place(x=350, y=300)
+
+        labelExamDurS = Label(self, height=2, width=15, bg="#313131", textvariable=enExTime, fg="#FFFFFF",
+                              font=s)
+        labelExamDurS.place(x=550, y=300)
+
+        examAtLS = Label(self, width=20, height=2, bg="#313131", text="Left Attempt Number:", fg="#FFFFFF",
+                         font=s)
+        examAtLS.place(x=350, y=400)
+
+        labelExamAtS = Label(self, height=2, width=15, bg="#313131", textvariable=atNum, fg="#FFFFFF",
+                             font=s)
+        labelExamAtS.place(x=550, y=400)
 
         buttonExit = Button(self, text="Exit Exam", command=back, fg="white", bg="#ca3e47", width=10)
-        buttonExit.grid(row=9, column=1, columnspan=3, padx=10, pady=10)
+        buttonExit.place(x=480, y=500)
 
         self.label = ttk.Label(
             self,
@@ -3891,7 +3974,10 @@ class ExamPageS(tk.Frame):
             background="black",
             foreground="red")
 
-        self.label.grid(row=20, column=60, columnspan=3, padx=10, pady=10)
+        self.label.place(x=430, y=50)
+
+        labelTimeLeft = Label(self, height=1, width=10, bg="#414141", text="Time Left", fg="#FFFFFF", font=('Times', 12))
+        labelTimeLeft.place(x=470, y=130)
 
         self.label.after(1000, self.update)
 
@@ -3909,7 +3995,8 @@ class ExamPageS(tk.Frame):
             return time.strftime('%H:%M:%S')
 
     def getExamInfoOnce(self):
-        examInfos = self.controller.get_frame(ExamDetailStudent).getExamInfo(self.controller.shared_data["selectedExam"])
+        examInfos = self.controller.get_frame(ExamDetailStudent).getExamInfo(
+            self.controller.shared_data["selectedExam"])
         tz_IN = pytz.timezone('Etc/GMT-3')
         splitArrDate = examInfos[2].split(sep="/")
         splitArrTime = examInfos[3].split(sep=":")
@@ -3926,6 +4013,13 @@ class ExamPageS(tk.Frame):
         arr = [startTime, endTime, examInfos[4], examInfos[5]]
         global examPageInfo
         examPageInfo = arr
+
+        global staExTime
+        staExTime.set(startTime.time())
+        global enExTime
+        enExTime.set(endTime.time())
+        global atNum
+        atNum.set(examInfos[0])
 
     def update(self):
         """ update the label every 1 second """
@@ -4053,8 +4147,8 @@ class ExamPageS(tk.Frame):
 
         cap.release()
         cv2.destroyAllWindows()
-        time.sleep(10)
 
+    def uploadVid(self, examID, studentID):
         resultVidRec = db.child("examEnroll").child(examID).child(studentID).child("VidRec").get()
         if resultVidRec.val() is None:
             parent = Path(__file__).parent
@@ -4075,8 +4169,18 @@ class ExamPageS(tk.Frame):
             db.child("examEnroll").child(examID).child(studentID).child("VidRec").child("Rec-" + str(numOfRec)).set(
                 data1)
 
-        messagebox.showinfo("Exam Over", "Exam Over")
-        self.controller.show_frame(StudentMainPage)
+        global uploadState
+        uploadState = True
+
+    def refreshingBox(self):
+        global uploadState
+        if uploadState == False:
+            messagebox.showinfo("Please Wait", f"Files are being uploaded.\nPlease press OK after a few secs.")
+            self.after(100, self.refreshingBox())
+
+        else:
+            messagebox.showinfo("Upload Completed", "You will directed to main page.")
+            uploadState = False
 
     def work(self, cap, faceEncoding, studentID, examID):
         # print("sleep time start")
@@ -4316,6 +4420,11 @@ class ExamPageS(tk.Frame):
                             # parent = Path(__file__).parent
                             # registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
                             # cv2.imwrite(registerPic, image)
+                            break
+                        if (datetime_Now - endTime).days == 0:
+                            # print("EXAM OVER")
+                            break
+                        if ExitButtonState:
                             break
             except:
                 continue
