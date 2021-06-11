@@ -1937,7 +1937,7 @@ class DeleteExam(tk.Frame):
                         blob.delete()
                 # part for FrChecks
                 elif a.key() == "FrChecks":
-                    print(a.val())
+                    # print(a.val())
 
                     for b in a.val():
                         # print(b)
@@ -4457,6 +4457,4 @@ if __name__ == "__main__":
     app.geometry("1050x600")
     app.resizable(False, False)
     app.title("FaceNet")
-    # app.iconbitmap('images/faceprint.jgp') It must end with .ico
-    # root.geometry("1100x700")
     app.mainloop()
