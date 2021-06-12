@@ -4513,6 +4513,11 @@ class ExamPageS(tk.Frame):
                 if str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
                     timeS = datetime.now(tz_IN)
                     while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
+                        if (datetime_Now - endTime).days == 0:
+                            # print("EXAM OVER")
+                            break
+                        if ExitButtonState:
+                            break
                         timeE = datetime.now(tz_IN)
                         if (timeE - timeS).seconds > 10:
                             while str(left_pupil) is None or (str(left_pupil) is not None and not gaze.is_center()):
@@ -4531,11 +4536,7 @@ class ExamPageS(tk.Frame):
                             # registerPic = Path(parent, 'Temp', 'TempAttImg.png').__str__()
                             # cv2.imwrite(registerPic, image)
                             break
-                        if (datetime_Now - endTime).days == 0:
-                            # print("EXAM OVER")
-                            break
-                        if ExitButtonState:
-                            break
+
             except:
                 continue
 
