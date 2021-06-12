@@ -2965,6 +2965,7 @@ class ExamReports(tk.Frame):
         studentListL.pack(side=TOP)
 
         self.trv = ttk.Treeview(tabs1, columns=(1, 2, 3, 4, 5, 6), height=12)
+        self.trv['show'] = 'headings'
         style = ttk.Style(self.trv)
         style.theme_use("clam")
 
@@ -2972,16 +2973,15 @@ class ExamReports(tk.Frame):
 
         style.map('Treeview', background=[('selected', 'blue')])
 
-        self.trv.heading('#0', text="#")
-        self.trv.column("#0", minwidth=0, width=20,anchor ="center")
+
         self.trv.heading('#1', text="Student ID")
-        self.trv.column("#1", minwidth=0, width=75,anchor ="center")
+        self.trv.column("#1", minwidth=0, width=85,anchor ="center")
         self.trv.heading('#2', text="Attempt Count")
         self.trv.column("#2", minwidth=0, width=95,anchor ="center")
         self.trv.heading('#3', text="Total FaceRec Count")
-        self.trv.column("#3", minwidth=0, width=120,anchor ="center")
+        self.trv.column("#3", minwidth=0, width=125,anchor ="center")
         self.trv.heading('#4', text="False FaceRec Count")
-        self.trv.column("#4", minwidth=0, width=120,anchor ="center")
+        self.trv.column("#4", minwidth=0, width=125,anchor ="center")
         self.trv.heading('#5', text="Missed FaceRec Count")
         self.trv.column("#5", minwidth=0, width=130,anchor ="center")
         self.trv.heading('#6', text="isAlone Violation Count")
@@ -3008,17 +3008,17 @@ class ExamReports(tk.Frame):
         isAloneVioCount = []
 
         self.trv2 = ttk.Treeview(tabs2, columns=(1, 2, 3), height=13)
+        self.trv2['show'] = 'headings'
         style = ttk.Style(self.trv2)
         style.configure('Treeview', rowheight=30)
 
-        self.trv2.heading('#0', text="")
-        self.trv2.column("#0", minwidth=0, width=85, anchor ="center")
+
         self.trv2.heading('#1', text="Event Name")
-        self.trv2.column("#1", minwidth=0, width=205,anchor ="center")
+        self.trv2.column("#1", minwidth=0, width=235,anchor ="center")
         self.trv2.heading('#2', text="Time Stamp")
-        self.trv2.column("#2", minwidth=0, width=205,anchor ="center")
+        self.trv2.column("#2", minwidth=0, width=235,anchor ="center")
         self.trv2.heading('#3', text="Category/State")
-        self.trv2.column("#3", minwidth=0, width=205,anchor ="center")
+        self.trv2.column("#3", minwidth=0, width=230,anchor ="center")
 
         yscrollbar = ttk.Scrollbar(tabs2, orient="vertical", command=self.trv2.yview)
 
@@ -3035,19 +3035,19 @@ class ExamReports(tk.Frame):
         categoryPart = []
 
         self.trv3 = ttk.Treeview(tabs3, columns=(1, 2, 3, 4), height=13)
+        self.trv3['show'] = 'headings'
         style = ttk.Style(self.trv3)
         style.configure('Treeview', rowheight=30)
 
-        self.trv3.heading('#0', text="")
-        self.trv3.column("#0", minwidth=0, width=80,anchor ="center")
+
         self.trv3.heading('#1', text="EyeGaze Code")
-        self.trv3.column("#1", minwidth=0, width=180,anchor ="center")
+        self.trv3.column("#1", minwidth=0, width=200,anchor ="center")
         self.trv3.heading('#2', text="Duration (seconds)")
-        self.trv3.column("#2", minwidth=0, width=130,anchor ="center")
+        self.trv3.column("#2", minwidth=0, width=150,anchor ="center")
         self.trv3.heading('#3', text="Start Time")
-        self.trv3.column("#3", minwidth=0, width=130,anchor ="center")
+        self.trv3.column("#3", minwidth=0, width=150,anchor ="center")
         self.trv3.heading('#4', text="End Time")
-        self.trv3.column("#4", minwidth=0, width=180,anchor ="center")
+        self.trv3.column("#4", minwidth=0, width=200,anchor ="center")
 
         yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
 
@@ -3446,15 +3446,30 @@ class ExamReports(tk.Frame):
             eyeEndTime = table3data[2]
             eyeStartTime = table3data[3]
 
+            self.trv2.tag_configure('clean', background="#FFFFFF")
+            self.trv2.tag_configure('gray', background="#DCDCDC")
+            self.trv3.tag_configure('clean', background="#FFFFFF")
+            self.trv3.tag_configure('gray', background="#DCDCDC")
+
             i = 0
             j = 0
             for event, timestampTS, categoryProduct in zip(eventName, timeStamp, categoryPart):
-                self.trv2.insert(parent='', index='end', iid=i, text="",
-                                 values=(event, timestampTS, categoryProduct))
+                if i % 2 !=0:
+                    self.trv2.insert(parent='', index='end', iid=i, text="",
+                                     values=(event, timestampTS, categoryProduct),tags=('clean',))
+                else:
+                    self.trv2.insert(parent='', index='end', iid=i, text="",
+                                     values=(event, timestampTS, categoryProduct),tags=('gray',))
+
                 i += 1
             for gazeCode, duration, endTime, startTime in zip(eyeGaCode, eyeDuration, eyeEndTime, eyeStartTime):
-                self.trv3.insert(parent='', index='end', iid=j, text="",
-                                 values=(gazeCode, duration, endTime, startTime))
+                if j % 2 !=0:
+                    self.trv3.insert(parent='', index='end', iid=j, text="",
+                                     values=(gazeCode, duration, endTime, startTime),tags=('clean',))
+                else:
+                    self.trv3.insert(parent='', index='end', iid=j, text="",
+                                     values=(gazeCode, duration, endTime, startTime),tags=('gray',))
+
                 j += 1
 
         except:
