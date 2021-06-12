@@ -158,6 +158,18 @@ class Login(tk.Frame):
         logoLabel.image = img
         logoLabel.pack(side=TOP, pady=30)
 
+        photoTeacher = Image.open("images/teacher-at-the-blackboard.png")
+        photoStudent = Image.open("images/reading-book.png")
+        photoSignIn = Image.open("images/sign-in.png")
+
+        photoTeacher = photoTeacher.resize((20, 20), Image.ANTIALIAS)
+        photoStudent = photoStudent.resize((20, 20), Image.ANTIALIAS)
+        photoSignIn = photoSignIn.resize((20, 20), Image.ANTIALIAS)
+
+        RphotoTeacher = ImageTk.PhotoImage(photoTeacher)
+        RphotoStudent = ImageTk.PhotoImage(photoStudent)
+        RphotoSignIn = ImageTk.PhotoImage(photoSignIn)
+
         # welcome = Label(self, text=" SIGN IN ", height=2, bg="#414141", fg="#FFFFFF", font=('Times', 20))
         # welcome.pack(side=TOP, fill=X)
 
@@ -183,13 +195,19 @@ class Login(tk.Frame):
                                 width=20)
         forgotPassword.place(x=450, y=470)
 
-        myButton = Button(self, text="Sign In!", command=login, fg="#000000", bg="#9fe6a0", width=10)
+        myButton = Button(self, text="  Sign In!  ", command=login, fg="#000000", bg="#9fe6a0",
+                          image=RphotoSignIn, compound=LEFT, font='Arial 10 bold')
+        myButton.image = RphotoSignIn
         myButton.place(x=485, y=370)
 
-        buttonStudent = Button(self, text="Student Sign Up", command=backS, bg="#325288", fg="#FFFFFF", width=15)
+        buttonStudent = Button(self, text="  Student Sign Up  ", command=backS, bg="#325288", fg="#FFFFFF",
+                               image=RphotoStudent, compound=LEFT, font='Arial 10 bold')
+        buttonStudent.image = RphotoStudent
         buttonStudent.place(x=310, y=420)
 
-        buttonTeacher = Button(self, text="Teacher Sign Up", command=backT, bg="#325288", fg="#FFFFFF", width=15)
+        buttonTeacher = Button(self, text="  Teacher Sign Up  ", command=backT, bg="#325288", fg="#FFFFFF",
+                               image=RphotoTeacher, compound=LEFT, font='Arial 10 bold')
+        buttonTeacher.image = RphotoTeacher
         buttonTeacher.place(x=620, y=420)
 
 
@@ -674,8 +692,13 @@ class TeacherMainPage(tk.Frame):
         logoLabel.image = img
         logoLabel.pack(side=LEFT)
 
-        logoutButton = Button(frameHeader, text="Logout", command=lambda: controller.show_frame(Login), width=10,
-                              bg="#ca3e47", fg="#FFFFFF")
+        photoSignOut = Image.open("images/sign-out-option.png")
+        photoSignOut = photoSignOut.resize((20, 20), Image.ANTIALIAS)
+        RphotoSignOut = ImageTk.PhotoImage(photoSignOut)
+
+        logoutButton = Button(frameHeader, text="  Logout  ", command=lambda: controller.show_frame(Login),
+                              bg="#ca3e47", fg="#FFFFFF", image=RphotoSignOut, compound=LEFT, font='Arial 10 bold')
+        logoutButton.image = RphotoSignOut
         logoutButton.pack(side=RIGHT)
 
         global welcomeMessage
@@ -863,8 +886,13 @@ class StudentMainPage(tk.Frame):
         logoLabel.image = img
         logoLabel.pack(side=LEFT)
 
-        logoutButton = Button(frameHeader, text="Logout", command=lambda: controller.show_frame(Login), width=10,
-                              bg="#ca3e47", fg="#FFFFFF")
+        photoSignOut = Image.open("images/sign-out-option.png")
+        photoSignOut = photoSignOut.resize((20, 20), Image.ANTIALIAS)
+        RphotoSignOut = ImageTk.PhotoImage(photoSignOut)
+
+        logoutButton = Button(frameHeader, text="  Logout  ", command=lambda: controller.show_frame(Login),
+                              bg="#ca3e47", fg="#FFFFFF", image=RphotoSignOut, compound=LEFT, font='Arial 10 bold')
+        logoutButton.image = RphotoSignOut
         logoutButton.pack(side=RIGHT)
 
         global welcomeMessageStudent
@@ -960,7 +988,7 @@ class StudentMainPage(tk.Frame):
 
         courseLength = self.getCoursesOfStudent(self.getIDfromMail(self.controller.shared_data["email"].get()))
 
-        self.canvas.itemconfig(self.window, width=len(courseLength)*250, height=newHeight)
+        self.canvas.itemconfig(self.window, width=len(courseLength) * 250, height=newHeight)
 
     def coursesS(self):
         global coursesofStudent
@@ -1788,100 +1816,100 @@ class CreateExam(tk.Frame):
     def create_Exam(self):
         if len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()),
                             str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
 
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()),
                             str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 1:
+            str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 1 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
                             str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
         elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
                 str(self.min_sb.get())) == 2 and len(
-                str(self.sec_hour.get())) == 2:
+            str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
                             str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
                             str(self.examID.get()), str(self.startDate.get_date()))
@@ -2965,7 +2993,6 @@ class ExamReports(tk.Frame):
         studentListL.pack(side=TOP)
 
         self.trv = ttk.Treeview(tabs1, columns=(1, 2, 3, 4, 5, 6), height=12)
-        self.trv['show'] = 'headings'
         style = ttk.Style(self.trv)
         style.theme_use("clam")
 
@@ -2973,19 +3000,20 @@ class ExamReports(tk.Frame):
 
         style.map('Treeview', background=[('selected', 'blue')])
 
-
+        self.trv.heading('#0', text="#")
+        self.trv.column("#0", minwidth=0, width=20, anchor="center")
         self.trv.heading('#1', text="Student ID")
-        self.trv.column("#1", minwidth=0, width=85,anchor ="center")
+        self.trv.column("#1", minwidth=0, width=75, anchor="center")
         self.trv.heading('#2', text="Attempt Count")
-        self.trv.column("#2", minwidth=0, width=95,anchor ="center")
+        self.trv.column("#2", minwidth=0, width=95, anchor="center")
         self.trv.heading('#3', text="Total FaceRec Count")
-        self.trv.column("#3", minwidth=0, width=125,anchor ="center")
+        self.trv.column("#3", minwidth=0, width=120, anchor="center")
         self.trv.heading('#4', text="False FaceRec Count")
-        self.trv.column("#4", minwidth=0, width=125,anchor ="center")
+        self.trv.column("#4", minwidth=0, width=120, anchor="center")
         self.trv.heading('#5', text="Missed FaceRec Count")
-        self.trv.column("#5", minwidth=0, width=130,anchor ="center")
+        self.trv.column("#5", minwidth=0, width=130, anchor="center")
         self.trv.heading('#6', text="isAlone Violation Count")
-        self.trv.column("#6", minwidth=0, width=140,anchor ="center")
+        self.trv.column("#6", minwidth=0, width=140, anchor="center")
 
         yscrollbar = ttk.Scrollbar(tabs1, orient="vertical", command=self.trv.yview)
 
@@ -3008,17 +3036,17 @@ class ExamReports(tk.Frame):
         isAloneVioCount = []
 
         self.trv2 = ttk.Treeview(tabs2, columns=(1, 2, 3), height=13)
-        self.trv2['show'] = 'headings'
         style = ttk.Style(self.trv2)
         style.configure('Treeview', rowheight=30)
 
-
+        self.trv2.heading('#0', text="")
+        self.trv2.column("#0", minwidth=0, width=85, anchor="center")
         self.trv2.heading('#1', text="Event Name")
-        self.trv2.column("#1", minwidth=0, width=235,anchor ="center")
+        self.trv2.column("#1", minwidth=0, width=205, anchor="center")
         self.trv2.heading('#2', text="Time Stamp")
-        self.trv2.column("#2", minwidth=0, width=235,anchor ="center")
+        self.trv2.column("#2", minwidth=0, width=205, anchor="center")
         self.trv2.heading('#3', text="Category/State")
-        self.trv2.column("#3", minwidth=0, width=230,anchor ="center")
+        self.trv2.column("#3", minwidth=0, width=205, anchor="center")
 
         yscrollbar = ttk.Scrollbar(tabs2, orient="vertical", command=self.trv2.yview)
 
@@ -3035,19 +3063,19 @@ class ExamReports(tk.Frame):
         categoryPart = []
 
         self.trv3 = ttk.Treeview(tabs3, columns=(1, 2, 3, 4), height=13)
-        self.trv3['show'] = 'headings'
         style = ttk.Style(self.trv3)
         style.configure('Treeview', rowheight=30)
 
-
+        self.trv3.heading('#0', text="")
+        self.trv3.column("#0", minwidth=0, width=80, anchor="center")
         self.trv3.heading('#1', text="EyeGaze Code")
-        self.trv3.column("#1", minwidth=0, width=200,anchor ="center")
+        self.trv3.column("#1", minwidth=0, width=180, anchor="center")
         self.trv3.heading('#2', text="Duration (seconds)")
-        self.trv3.column("#2", minwidth=0, width=150,anchor ="center")
+        self.trv3.column("#2", minwidth=0, width=130, anchor="center")
         self.trv3.heading('#3', text="Start Time")
-        self.trv3.column("#3", minwidth=0, width=150,anchor ="center")
+        self.trv3.column("#3", minwidth=0, width=130, anchor="center")
         self.trv3.heading('#4', text="End Time")
-        self.trv3.column("#4", minwidth=0, width=200,anchor ="center")
+        self.trv3.column("#4", minwidth=0, width=180, anchor="center")
 
         yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
 
@@ -3146,7 +3174,7 @@ class ExamReports(tk.Frame):
         for studentID, attempt, totalFR, falseFR, missedFR, isAloneV in zip(StudentIDColumn, AttemptCount,
                                                                             TotalFaceRecCount, FalseFaceRecCount,
                                                                             MissedFaceRecCount, isAloneVioCount):
-            if i % 2 !=0:
+            if i % 2 != 0:
                 if int(falseFR) >= 1 or int(missedFR) >= 1 or int(isAloneV) >= 1:
                     self.trv.insert(parent='', index='end', iid=i, text="",
                                     values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
@@ -3166,7 +3194,6 @@ class ExamReports(tk.Frame):
                                     values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
                                     tags=('gray',))
                 i += 1
-
 
     def getExamReportTable(self, examID):
         studentIDCol = list()
@@ -3446,30 +3473,15 @@ class ExamReports(tk.Frame):
             eyeEndTime = table3data[2]
             eyeStartTime = table3data[3]
 
-            self.trv2.tag_configure('clean', background="#FFFFFF")
-            self.trv2.tag_configure('gray', background="#DCDCDC")
-            self.trv3.tag_configure('clean', background="#FFFFFF")
-            self.trv3.tag_configure('gray', background="#DCDCDC")
-
             i = 0
             j = 0
             for event, timestampTS, categoryProduct in zip(eventName, timeStamp, categoryPart):
-                if i % 2 !=0:
-                    self.trv2.insert(parent='', index='end', iid=i, text="",
-                                     values=(event, timestampTS, categoryProduct),tags=('clean',))
-                else:
-                    self.trv2.insert(parent='', index='end', iid=i, text="",
-                                     values=(event, timestampTS, categoryProduct),tags=('gray',))
-
+                self.trv2.insert(parent='', index='end', iid=i, text="",
+                                 values=(event, timestampTS, categoryProduct))
                 i += 1
             for gazeCode, duration, endTime, startTime in zip(eyeGaCode, eyeDuration, eyeEndTime, eyeStartTime):
-                if j % 2 !=0:
-                    self.trv3.insert(parent='', index='end', iid=j, text="",
-                                     values=(gazeCode, duration, endTime, startTime),tags=('clean',))
-                else:
-                    self.trv3.insert(parent='', index='end', iid=j, text="",
-                                     values=(gazeCode, duration, endTime, startTime),tags=('gray',))
-
+                self.trv3.insert(parent='', index='end', iid=j, text="",
+                                 values=(gazeCode, duration, endTime, startTime))
                 j += 1
 
         except:
@@ -3715,7 +3727,6 @@ class ExamDetailStudent(tk.Frame):
                         colorGreen, thickness, cv2.LINE_AA, False)
             cv2.putText(img, "Press Escape to exit", org2, font, fontScale2,
                         colorWhite, thickness, cv2.LINE_AA, False)
-
 
             cv2.imshow("Exam Enterance Attempt", img)
             imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
@@ -4043,6 +4054,12 @@ class ExamPageS(tk.Frame):
         global atNum
         atNum = tk.StringVar()
 
+        frameLeft = Frame(self, width=200, bg="#313131", relief=SUNKEN, borderwidth=2)
+        frameLeft.pack(side=LEFT, fill=Y)
+
+        frameRight = Frame(self, width=200, bg="#313131", relief=SUNKEN, borderwidth=2)
+        frameRight.pack(side=RIGHT, fill=Y)
+
         examTimeLS = Label(self, width=20, height=2, bg="#313131", text="Exam Start Time:", fg="#FFFFFF", font=s)
         examTimeLS.place(x=350, y=200)
 
@@ -4068,18 +4085,21 @@ class ExamPageS(tk.Frame):
         buttonExit = Button(self, text="Exit Exam", command=back, fg="white", bg="#ca3e47", width=10)
         buttonExit.place(x=490, y=500)
 
-        self.label = ttk.Label(
+        self.label = Label(
             self,
             text=self.time_string(),
             font=('Digital-7', 40),
             background="#414141",
+            highlightthickness=4,
+            highlightbackground="#313131",
+            relief="solid",
             foreground="red")
 
-        self.label.place(x=440, y=50)
+        self.label.place(x=440, y=80)
 
         labelTimeLeft = Label(self, height=1, width=10, bg="#414141", text="Time Left", fg="#FFFFFF",
-                              font=('Times', 12))
-        labelTimeLeft.place(x=480, y=130)
+                              font=('Times', 14))
+        labelTimeLeft.place(x=480, y=35)
 
         self.label.after(1000, self.update)
 
@@ -4124,7 +4144,7 @@ class ExamPageS(tk.Frame):
 
         stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(self.controller.shared_data["email"].get())
         global atNum
-        atNum.set(self.getRemAttempt(self.controller.shared_data["selectedExam"],stuID))
+        atNum.set(self.getRemAttempt(self.controller.shared_data["selectedExam"], stuID))
 
     def update(self):
         """ update the label every 1 second """
@@ -4132,7 +4152,7 @@ class ExamPageS(tk.Frame):
         # schedule another timer
         self.label.after(1000, self.update)
 
-    def getRemAttempt(self,examID, studentID):
+    def getRemAttempt(self, examID, studentID):
         resultAtt = db.child("examEnroll").child(examID).child(studentID).child("Attempts").get()
         resultEx = db.child("exams").child(examID).get()
         totalAtt = int(resultEx.val()["AttemptNumbers"])
@@ -4570,4 +4590,5 @@ if __name__ == "__main__":
     app.geometry("1050x600")
     app.resizable(False, False)
     app.title("FaceNet")
+    app.iconbitmap('images/bitmapIcon.ico')
     app.mainloop()
