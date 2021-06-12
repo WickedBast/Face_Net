@@ -416,7 +416,7 @@ class StudentRegister(tk.Frame):
         # print(tessPath)
         pytesseract.pytesseract.tesseract_cmd = tessPath
         cam = cv2.VideoCapture(0)
-        cv2.namedWindow("test")
+        cv2.namedWindow("ID Card Reader")
         while True:
             ret, frame = cam.read()
             if not ret:
@@ -447,7 +447,7 @@ class StudentRegister(tk.Frame):
                         colorGreen, thickness, cv2.LINE_AA, False)
             cv2.putText(frame, f"Press Esc after checking your information", org3, font, 0.5,
                         colorRed, thickness, cv2.LINE_AA, False)
-            cv2.imshow("test", frame)
+            cv2.imshow("ID Card Reader", frame)
             k = cv2.waitKey(1)
             if k % 256 == 27:
                 # ESC pressed
@@ -1101,7 +1101,7 @@ class StudentMainPage(tk.Frame):
                         colorRed, thickness, cv2.LINE_AA, False)
             cv2.putText(img, "Hold Escape to Exit", org2, font, fontScale,
                         colorWhite, thickness, cv2.LINE_AA, False)
-            cv2.imshow("test", img)
+            cv2.imshow("Face Recognition Check", img)
             imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
             imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
 
@@ -1147,7 +1147,7 @@ class StudentMainPage(tk.Frame):
                             colorGreen, thickness, cv2.LINE_AA, False)
                 cv2.putText(img, "Hold Escape to Exit", org2, font, fontScale,
                             colorWhite, thickness, cv2.LINE_AA, False)
-                cv2.imshow("test", img)
+                cv2.imshow("Face Recognition Check", img)
                 cv2.waitKey(1)
 
     def capture(self):
@@ -1187,7 +1187,7 @@ class StudentMainPage(tk.Frame):
             cv2.putText(frame, "Press Esc to exit", (10, 450), cv2.FONT_HERSHEY_DUPLEX, 0.9,
                         (0, 128, 0), 2)
 
-            cv2.imshow("Demo", frame)
+            cv2.imshow("Eye Gaze Check", frame)
 
             if cv2.waitKey(1) == 27:
                 webcam.release()
@@ -1204,7 +1204,7 @@ class StudentMainPage(tk.Frame):
     def changeEncoding(self, studentID):
         state = False
         cam = cv2.VideoCapture(0)
-        cv2.namedWindow("test")
+        cv2.namedWindow("FaceNet")
         while True:
             ret, frame = cam.read()
             if not ret:
@@ -1243,7 +1243,7 @@ class StudentMainPage(tk.Frame):
                 cv2.putText(frame, "Hold Escape to exit.", org2, font, fontScale,
                             colorWhite, thickness, cv2.LINE_AA, False)
 
-            cv2.imshow("test", frame)
+            cv2.imshow("FaceNet", frame)
             k = cv2.waitKey(1)
             if k % 256 == 27:
                 # ESC pressed
@@ -2973,19 +2973,19 @@ class ExamReports(tk.Frame):
         style.map('Treeview', background=[('selected', 'blue')])
 
         self.trv.heading('#0', text="#")
-        self.trv.column("#0", minwidth=0, width=20)
+        self.trv.column("#0", minwidth=0, width=20,anchor ="center")
         self.trv.heading('#1', text="Student ID")
-        self.trv.column("#1", minwidth=0, width=75)
+        self.trv.column("#1", minwidth=0, width=75,anchor ="center")
         self.trv.heading('#2', text="Attempt Count")
-        self.trv.column("#2", minwidth=0, width=95)
+        self.trv.column("#2", minwidth=0, width=95,anchor ="center")
         self.trv.heading('#3', text="Total FaceRec Count")
-        self.trv.column("#3", minwidth=0, width=120)
+        self.trv.column("#3", minwidth=0, width=120,anchor ="center")
         self.trv.heading('#4', text="False FaceRec Count")
-        self.trv.column("#4", minwidth=0, width=120)
+        self.trv.column("#4", minwidth=0, width=120,anchor ="center")
         self.trv.heading('#5', text="Missed FaceRec Count")
-        self.trv.column("#5", minwidth=0, width=130)
+        self.trv.column("#5", minwidth=0, width=130,anchor ="center")
         self.trv.heading('#6', text="isAlone Violation Count")
-        self.trv.column("#6", minwidth=0, width=140)
+        self.trv.column("#6", minwidth=0, width=140,anchor ="center")
 
         yscrollbar = ttk.Scrollbar(tabs1, orient="vertical", command=self.trv.yview)
 
@@ -3012,13 +3012,13 @@ class ExamReports(tk.Frame):
         style.configure('Treeview', rowheight=30)
 
         self.trv2.heading('#0', text="")
-        self.trv2.column("#0", minwidth=0, width=85)
+        self.trv2.column("#0", minwidth=0, width=85, anchor ="center")
         self.trv2.heading('#1', text="Event Name")
-        self.trv2.column("#1", minwidth=0, width=205)
+        self.trv2.column("#1", minwidth=0, width=205,anchor ="center")
         self.trv2.heading('#2', text="Time Stamp")
-        self.trv2.column("#2", minwidth=0, width=205)
+        self.trv2.column("#2", minwidth=0, width=205,anchor ="center")
         self.trv2.heading('#3', text="Category/State")
-        self.trv2.column("#3", minwidth=0, width=205)
+        self.trv2.column("#3", minwidth=0, width=205,anchor ="center")
 
         yscrollbar = ttk.Scrollbar(tabs2, orient="vertical", command=self.trv2.yview)
 
@@ -3039,15 +3039,15 @@ class ExamReports(tk.Frame):
         style.configure('Treeview', rowheight=30)
 
         self.trv3.heading('#0', text="")
-        self.trv3.column("#0", minwidth=0, width=80)
+        self.trv3.column("#0", minwidth=0, width=80,anchor ="center")
         self.trv3.heading('#1', text="EyeGaze Code")
-        self.trv3.column("#1", minwidth=0, width=180)
+        self.trv3.column("#1", minwidth=0, width=180,anchor ="center")
         self.trv3.heading('#2', text="Duration (seconds)")
-        self.trv3.column("#2", minwidth=0, width=130)
+        self.trv3.column("#2", minwidth=0, width=130,anchor ="center")
         self.trv3.heading('#3', text="Start Time")
-        self.trv3.column("#3", minwidth=0, width=130)
+        self.trv3.column("#3", minwidth=0, width=130,anchor ="center")
         self.trv3.heading('#4', text="End Time")
-        self.trv3.column("#4", minwidth=0, width=180)
+        self.trv3.column("#4", minwidth=0, width=180,anchor ="center")
 
         yscrollbar = ttk.Scrollbar(tabs3, orient="vertical", command=self.trv3.yview)
 
@@ -3140,20 +3140,33 @@ class ExamReports(tk.Frame):
 
         self.trv.tag_configure('suspicious', background="#EE5048")
         self.trv.tag_configure('clean', background="#FFFFFF")
+        self.trv.tag_configure('gray', background="#DCDCDC")
 
         i = 0
         for studentID, attempt, totalFR, falseFR, missedFR, isAloneV in zip(StudentIDColumn, AttemptCount,
                                                                             TotalFaceRecCount, FalseFaceRecCount,
                                                                             MissedFaceRecCount, isAloneVioCount):
-            if int(falseFR) >= 1 or int(missedFR) >= 1 or int(isAloneV) >= 1:
-                self.trv.insert(parent='', index='end', iid=i, text="",
-                                values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
-                                tags=('suspicious',))
+            if i % 2 !=0:
+                if int(falseFR) >= 1 or int(missedFR) >= 1 or int(isAloneV) >= 1:
+                    self.trv.insert(parent='', index='end', iid=i, text="",
+                                    values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                    tags=('suspicious',))
+                else:
+                    self.trv.insert(parent='', index='end', iid=i, text="",
+                                    values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                    tags=('clean',))
+                i += 1
             else:
-                self.trv.insert(parent='', index='end', iid=i, text="",
-                                values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
-                                tags=('clean',))
-            i += 1
+                if int(falseFR) >= 1 or int(missedFR) >= 1 or int(isAloneV) >= 1:
+                    self.trv.insert(parent='', index='end', iid=i, text="",
+                                    values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                    tags=('suspicious',))
+                else:
+                    self.trv.insert(parent='', index='end', iid=i, text="",
+                                    values=(studentID, attempt, totalFR, falseFR, missedFR, isAloneV),
+                                    tags=('gray',))
+                i += 1
+
 
     def getExamReportTable(self, examID):
         studentIDCol = list()
@@ -3671,8 +3684,25 @@ class ExamDetailStudent(tk.Frame):
             if countOfSucces == 5:
                 attemptImg = img
                 break
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            # org
+            org = (00, 420)
+            org2 = (00, 450)
+            # fontScale
+            fontScale = 0.5
+            fontScale2 = 0.75
+            # Red color in BGR
+            colorGreen = (0, 128, 0)
+            colorWhite = (0, 0, 255)
+            # Line thickness of 2 px
+            thickness = 2
+            cv2.putText(img, "You will be directed to exam page after recognition is complete.", org, font, fontScale,
+                        colorGreen, thickness, cv2.LINE_AA, False)
+            cv2.putText(img, "Press Escape to exit", org2, font, fontScale2,
+                        colorWhite, thickness, cv2.LINE_AA, False)
 
-            cv2.imshow("test", img)
+
+            cv2.imshow("Exam Enterance Attempt", img)
             imgSmall = cv2.resize(img, (0, 0), None, 0.25, 0.25)
             imgSmall = cv2.cvtColor(imgSmall, cv2.COLOR_BGR2RGB)
 
@@ -4027,7 +4057,7 @@ class ExamPageS(tk.Frame):
             self,
             text=self.time_string(),
             font=('Digital-7', 40),
-            background="black",
+            background="#414141",
             foreground="red")
 
         self.label.place(x=440, y=50)
@@ -4076,14 +4106,27 @@ class ExamPageS(tk.Frame):
         staExTime.set(startTime.time())
         global enExTime
         enExTime.set(endTime.time())
+
+        stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(self.controller.shared_data["email"].get())
         global atNum
-        atNum.set(examInfos[0])
+        atNum.set(self.getRemAttempt(self.controller.shared_data["selectedExam"],stuID))
 
     def update(self):
         """ update the label every 1 second """
         self.label.configure(text=self.time_string())
         # schedule another timer
         self.label.after(1000, self.update)
+
+    def getRemAttempt(self,examID, studentID):
+        resultAtt = db.child("examEnroll").child(examID).child(studentID).child("Attempts").get()
+        resultEx = db.child("exams").child(examID).get()
+        totalAtt = int(resultEx.val()["AttemptNumbers"])
+        if (resultAtt.val() != None):
+            attemptsDone = int(len(list(resultAtt.val())))
+
+            return (totalAtt - attemptsDone)
+        else:
+            return totalAtt
 
     def exam(self):
         global examAbbS
