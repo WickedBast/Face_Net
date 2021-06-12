@@ -915,18 +915,52 @@ class StudentMainPage(tk.Frame):
         self.canvas = Canvas(self.frameCourses, height=410)
         self.canvas.pack(side=TOP, fill=BOTH, expand=1)
 
-        xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvas.xview)
-        xscrollbar.pack(side=BOTTOM, fill=X)
+        self.xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvas.xview)
+        self.xscrollbar.pack(side=BOTTOM, fill=X)
 
-        self.canvas.configure(xscrollcommand=xscrollbar.set)
-        self.canvas.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.configure(xscrollcommand=self.xscrollbar.set)
+        # self.canvas.bind('<Configure>', lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
-        self.sec_frame = Frame(self.canvas, height=500, width=4000, bg="#313131", relief=SUNKEN)
+        self.sec_frame = Frame(self.canvas, height=500, width=910, bg="#313131", relief=SUNKEN)
 
-        self.canvas.create_window((0, 500), window=self.sec_frame, anchor="sw")
+        self.window = self.canvas.create_window((0, 700), window=self.sec_frame, anchor="sw")
+
+        self.sec_frame.bind("<Configure>", self.onFrameConfigure)
+        self.canvas.bind("<Configure>", self.onCanvasConfigure)
 
         global coursesofStudent
         coursesofStudent = []
+
+    def onFrameConfigure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def onCanvasConfigure(self, event):
+        # TODO: FIT SCROLLBAR
+
+        minWidth = self.sec_frame.winfo_reqwidth()
+        minHeight = self.sec_frame.winfo_reqheight()
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+            # Hide the scrollbar when not needed
+            self.xscrollbar.grid_remove()
+        else:
+            newWidth = minWidth
+            # Show the scrollbar when needed
+            self.xscrollbar.grid()
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+            # Hide the scrollbar when not needed
+            self.xscrollbar.grid_remove()
+        else:
+            newHeight = minHeight
+            # Show the scrollbar when needed
+            self.xscrollbar.grid()
+
+        courseLength = self.getCoursesOfStudent(self.getIDfromMail(self.controller.shared_data["email"].get()))
+
+        self.canvas.itemconfig(self.window, width=len(courseLength)*250, height=newHeight)
 
     def coursesS(self):
         global coursesofStudent
@@ -934,10 +968,9 @@ class StudentMainPage(tk.Frame):
 
         for widget in self.sec_frame.winfo_children():
             widget.destroy()
-        '''
-        if len(coursesofStudent) >= 4:
-            self.sec_frame.configure(width=len(coursesofStudent) * 250)
-        '''
+
+        self.onCanvasConfigure("")
+
         size = 0
 
         for course in coursesofStudent:
@@ -1329,18 +1362,25 @@ class CreateCourse(tk.Frame):
         welcome = Label(self, text=" ADD COURSE ", width=150, height=5, bg="#414141", fg="#FFFFFF", font=('Times', 20))
         welcome.pack(side=TOP, fill=X)
 
+        browseButton = Button(self, text="Browse a File", command=self.fileDialog,
+                              width=12, bg="#ca3e47", fg="#FFFFFF")
+        browseButton.place(x=280, y=170)
+
+        self.documentLabel = Label(self, text="File Name", width=44)
+        self.documentLabel.place(x=400, y=172)
+
         courseNameL = Label(self, text="Course Name:", width=12, height=2, bg="#313131", fg="#FFFFFF")
-        courseNameL.place(x=285, y=170)
+        courseNameL.place(x=285, y=240)
 
         courseNameE = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
-        courseNameE.place(x=400, y=175)
+        courseNameE.place(x=400, y=245)
         courseNameE.insert(0, "Course Name")
 
         courseAbbL = Label(self, text="Course Abbreviation:", width=17, height=2, bg="#313131", fg="#FFFFFF")
-        courseAbbL.place(x=250, y=240)
+        courseAbbL.place(x=250, y=320)
 
         courseAbbE = Entry(self, width=50, borderwidth=5, bg="#FFFFFF", fg="#000000")
-        courseAbbE.place(x=400, y=245)
+        courseAbbE.place(x=400, y=325)
         courseAbbE.insert(0, "Course Abbreviation")
 
         refresh()
@@ -1348,15 +1388,8 @@ class CreateCourse(tk.Frame):
         backButton = Button(self, text="Back", command=back, width=10, bg="#fed049")
         backButton.place(x=300, y=400)
 
-        browseButton = Button(self, text="Browse a File", command=self.fileDialog,
-                              width=12, bg="#ca3e47", fg="#FFFFFF")
-        browseButton.place(x=280, y=320)
-
-        self.documentLabel = Label(self, text="File Name", width=43)
-        self.documentLabel.place(x=405, y=322)
-
         buttonSubmit = Button(self, text="Submit Class", width=13, bg="#ca3e47", fg="#FFFFFF", command=create)
-        buttonSubmit.place(x=480, y=400)
+        buttonSubmit.place(x=510, y=400)
 
     def fileDialog(self):
         self.filename = filedialog.askopenfilename(initialdir="/", title="Select A File", filetype=
@@ -1517,9 +1550,11 @@ class CreateExam(tk.Frame):
         durL = Label(self, text="Select Duration:", width=20, height=2, bg="#313131", fg="#FFFFFF")
         durL.place(x=100, y=330)
 
-        self.hour_dur = Spinbox(self, from_=0, to=9, wrap=True, textvariable=self.hour_d_string, width=2, state="readonly",
-                           font=f, justify=CENTER)
-        self.min_dur = Spinbox(self, from_=0, to=59, wrap=True, textvariable=self.min_d_string, font=f, width=2, justify=CENTER)
+        self.hour_dur = Spinbox(self, from_=0, to=9, wrap=True, textvariable=self.hour_d_string, width=2,
+                                state="readonly",
+                                font=f, justify=CENTER)
+        self.min_dur = Spinbox(self, from_=0, to=59, wrap=True, textvariable=self.min_d_string, font=f, width=2,
+                               justify=CENTER)
 
         self.hour_dur.place(x=310, y=330)
         self.min_dur.place(x=360, y=330)
@@ -1536,15 +1571,16 @@ class CreateExam(tk.Frame):
         dateL.place(x=520, y=150)
 
         self.startDate = Calendar(self, selectmode='day', year=today.year, month=today.month, day=today.day,
-                             date_pattern='dd/mm/yy')
+                                  date_pattern='dd/mm/yy')
         self.startDate.place(x=700, y=150)
 
         timeL = Label(self, text="Select Exam Time:", width=20, height=2, bg="#313131", fg="#FFFFFF")
         timeL.place(x=520, y=420)
 
         self.min_sb = Spinbox(self, from_=8, to=23, wrap=True, textvariable=self.hour_string, width=2, state="readonly",
-                         font=f, justify=CENTER)
-        self.sec_hour = Spinbox(self, from_=0, to=59, wrap=True, textvariable=self.min_string, font=f, width=2, justify=CENTER)
+                              font=f, justify=CENTER)
+        self.sec_hour = Spinbox(self, from_=0, to=59, wrap=True, textvariable=self.min_string, font=f, width=2,
+                                justify=CENTER)
 
         self.hour_string.set(int(now.hour))
         self.min_string.set(int(now.minute))
@@ -1750,89 +1786,105 @@ class CreateExam(tk.Frame):
                 messagebox.showerror("Time Error", "Check the minutes")
 
     def create_Exam(self):
-        if len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 1 and len(
+        if len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()),
-                       str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 1 and len(
+                            str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()),
+                            str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 2 and len(
+                            str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 1 and len(
+                            str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 2 and len(
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 1 and len(
+                            str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 2 and len(
+                            str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 2 and len(
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 1 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str("0" + self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
 
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 1 and len(
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()),
-                       str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 1 and len(
+                            str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()),
+                            str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 2 and len(
+                            str("0" + self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 1 and len(
+                            str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 2 and len(
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 1:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 1 and len(
+                            str(self.min_sb.get() + ":" + "0" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 1 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(str(self.min_sb.get())) == 2 and len(
+                            str("0" + self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 1 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + "0" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
-        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(str(self.min_sb.get())) == 2 and len(
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
+        elif len(str(self.hour_dur.get())) == 2 and len(str(self.min_dur.get())) == 2 and len(
+                str(self.min_sb.get())) == 2 and len(
                 str(self.sec_hour.get())) == 2:
             self.createExam(str(self.courseAbbC.get()), str(self.hour_dur.get() + ":" + self.min_dur.get()),
-                       str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
-                       str(self.examID.get()), str(self.startDate.get_date()))
+                            str(self.min_sb.get() + ":" + self.sec_hour.get()), str(self.attemptNum.get()),
+                            str(self.examID.get()), str(self.startDate.get_date()))
 
     def refresh(self):
         self.courseAbbC.set("")
@@ -3929,7 +3981,8 @@ class ExamPageS(tk.Frame):
             global examPageInfo
             examPageInfo = []
             global examAbbS
-            stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(self.controller.shared_data["email"].get())
+            stuID = self.controller.get_frame(ExamDetailStudent).getIDfromMailS(
+                self.controller.shared_data["email"].get())
             t1Up = Thread(target=self.uploadVid, args=[examAbbS.get(), stuID])
             t1Up.start()
             self.refreshingBox()
@@ -3979,7 +4032,8 @@ class ExamPageS(tk.Frame):
 
         self.label.place(x=440, y=50)
 
-        labelTimeLeft = Label(self, height=1, width=10, bg="#414141", text="Time Left", fg="#FFFFFF", font=('Times', 12))
+        labelTimeLeft = Label(self, height=1, width=10, bg="#414141", text="Time Left", fg="#FFFFFF",
+                              font=('Times', 12))
         labelTimeLeft.place(x=480, y=130)
 
         self.label.after(1000, self.update)
