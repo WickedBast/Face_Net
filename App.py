@@ -753,18 +753,21 @@ class TeacherMainPage(tk.Frame):
         self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameCourses.pack(side=TOP, fill=X)
 
-        self.canvasT = Canvas(self.frameCourses, height=410)
+        self.canvasT = Canvas(self.frameCourses, height=410, bg="#313131")
         self.canvasT.pack(side=TOP, fill=BOTH, expand=1)
 
-        xscrollbarT = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvasT.xview)
-        xscrollbarT.pack(side=BOTTOM, fill=X)
+        self.xscrollbarT = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvasT.xview)
+        self.xscrollbarT.pack(side=BOTTOM, fill=X)
 
-        self.canvasT.configure(xscrollcommand=xscrollbarT.set)
-        self.canvasT.bind('<Configure>', lambda e: self.canvasT.configure(scrollregion=self.canvasT.bbox("all")))
+        self.canvasT.configure(xscrollcommand=self.xscrollbarT.set)
+        # self.canvasT.bind('<Configure>', lambda e: self.canvasT.configure(scrollregion=self.canvasT.bbox("all")))
 
-        self.sec_frameT = Frame(self.canvasT, height=500, width=4000, bg="#313131", relief=SUNKEN)
+        self.sec_frameT = Frame(self.canvasT, height=500, width=910, bg="#313131", relief=SUNKEN)
 
-        self.canvasT.create_window((0, 500), window=self.sec_frameT, anchor="sw")
+        self.sec_frameT.bind("<Configure>", self.onFrameConfigure)
+        self.canvasT.bind("<Configure>", self.onCanvasConfigure)
+
+        self.windowT = self.canvasT.create_window((0, 700), window=self.sec_frameT, anchor="sw")
 
         global coursesofTeacher
         coursesofTeacher = []
@@ -774,19 +777,43 @@ class TeacherMainPage(tk.Frame):
         self.controller.get_frame(CreateExam).updateTime()
         self.controller.show_frame(CreateExam)
 
+    def onFrameConfigure(self, event):
+        self.canvasT.configure(scrollregion=self.canvasT.bbox("all"))
+
+    def onCanvasConfigure(self, event):
+        minWidth = self.sec_frameT.winfo_reqwidth()
+        minHeight = self.sec_frameT.winfo_reqheight()
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+            # Hide the scrollbar when not needed
+            self.xscrollbarT.grid_remove()
+        else:
+            newWidth = minWidth
+            # Show the scrollbar when needed
+            self.xscrollbarT.grid()
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+            # Hide the scrollbar when not needed
+            self.xscrollbarT.grid_remove()
+        else:
+            newHeight = minHeight
+            # Show the scrollbar when needed
+            self.xscrollbarT.grid()
+
+        courseLength = self.getCourseCodesOfTeacher(self.controller.shared_data["email"].get())
+
+        self.canvasT.itemconfig(self.windowT, width=len(courseLength) * 250, height=newHeight)
+
     def courses(self):
         global coursesofTeacher
         coursesofTeacher = self.getCourseCodesOfTeacher(self.controller.shared_data["email"].get())
         courses = coursesofTeacher
 
-        # print(courses)
-
         for widget in self.sec_frameT.winfo_children():
             widget.destroy()
-        '''
-        if len(coursesofTeacher) >= 4:
-            self.sec_frameT.configure(width=len(coursesofStudent) * 250)
-        '''
+
         size = 0
 
         for course in courses:
@@ -821,6 +848,8 @@ class TeacherMainPage(tk.Frame):
             self.emptyLabelT = Label(self.frameCourses, height=2, bg="#313131", text="There are no Created Courses",
                                      fg="#FFFFFF", font=('Times', 30))
             self.emptyLabelT.place(x=200, y=150)
+
+        self.onCanvasConfigure("")
 
     def getCourseCodesOfTeacher(self, teacherMail):
         coursesArrays = []
@@ -930,22 +959,23 @@ class StudentMainPage(tk.Frame):
         frameButtons = Frame(frameCenter, height=880, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT, fill=Y)
 
-        buttonTF = Button(frameButtons, text="    Test FaceRec   ", command=self.test, bg="#ca3e47", fg="#FFFFFF",image=RphotoTestF, compound=LEFT)
+        buttonTF = Button(frameButtons, text="    Test FaceRec   ", command=self.test, bg="#ca3e47", fg="#FFFFFF",
+                          image=RphotoTestF, compound=LEFT)
         buttonTF.image = RphotoTestF
         buttonTF.grid(row=1, column=1, columnspan=3, padx=10, pady=50)
 
         buttonTE = Button(frameButtons, text="    Test EyeGaze   ", command=self.capture,
-                           bg="#ca3e47", fg="#FFFFFF",image=RphotoTestE, compound=LEFT)
+                          bg="#ca3e47", fg="#FFFFFF", image=RphotoTestE, compound=LEFT)
         buttonTE.image = RphotoTestE
         buttonTE.grid(row=3, column=1, columnspan=3, padx=10, pady=50)
 
         buttonCP = Button(frameButtons, text="  Change Picture  ", command=self.change,
-                           bg="#ca3e47", fg="#FFFFFF",image=RphotoChangeI, compound=LEFT)
-        buttonCP.image=RphotoChangeI
+                          bg="#ca3e47", fg="#FFFFFF", image=RphotoChangeI, compound=LEFT)
+        buttonCP.image = RphotoChangeI
         buttonCP.grid(row=5, column=1, columnspan=3, padx=10, pady=50)
 
-        buttonCC = Button(frameButtons, text= " Change Password ", command=self.changePass,
-                           bg="#ca3e47", fg="#FFFFFF",image=RphotoChangeP, compound=LEFT)
+        buttonCC = Button(frameButtons, text=" Change Password ", command=self.changePass,
+                          bg="#ca3e47", fg="#FFFFFF", image=RphotoChangeP, compound=LEFT)
         buttonCC.image = RphotoChangeP
         buttonCC.grid(row=7, column=1, columnspan=3, padx=10, pady=50)
 
@@ -975,10 +1005,10 @@ class StudentMainPage(tk.Frame):
 
         self.sec_frame = Frame(self.canvas, height=500, width=910, bg="#313131", relief=SUNKEN)
 
-        self.window = self.canvas.create_window((0, 700), window=self.sec_frame, anchor="sw")
-
         self.sec_frame.bind("<Configure>", self.onFrameConfigure)
         self.canvas.bind("<Configure>", self.onCanvasConfigure)
+
+        self.window = self.canvas.create_window((0, 700), window=self.sec_frame, anchor="sw")
 
         global coursesofStudent
         coursesofStudent = []
@@ -987,8 +1017,6 @@ class StudentMainPage(tk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def onCanvasConfigure(self, event):
-        # TODO: FIT SCROLLBAR
-
         minWidth = self.sec_frame.winfo_reqwidth()
         minHeight = self.sec_frame.winfo_reqheight()
 
@@ -1020,8 +1048,6 @@ class StudentMainPage(tk.Frame):
 
         for widget in self.sec_frame.winfo_children():
             widget.destroy()
-
-        self.onCanvasConfigure("")
 
         size = 0
 
@@ -1057,6 +1083,8 @@ class StudentMainPage(tk.Frame):
             self.emptyLabel = Label(self.sec_frame, height=2, bg="#313131", text="There are no Enrolled Courses",
                                     fg="#FFFFFF", font=('Times', 30))
             self.emptyLabel.place(x=200, y=150)
+
+        self.onCanvasConfigure("")
 
     def getCoursesOfStudent(self, studentID):
         coursesArrays = []
@@ -1618,7 +1646,8 @@ class CreateExam(tk.Frame):
 
         self.attempts = StringVar()
 
-        self.attemptNum = Spinbox(self, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER, textvariable=self.attempts)
+        self.attemptNum = Spinbox(self, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER,
+                                  textvariable=self.attempts)
         self.attemptNum.place(x=330, y=420)
 
         dateL = Label(self, text="Select Exam Date:", width=20, height=2, bg="#313131", fg="#FFFFFF")
@@ -2757,19 +2786,21 @@ class TeacherCoursePage(tk.Frame):
         self.frameFutureExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.frameFutureExams.pack(side=TOP, fill=X)
 
-        self.canvasFuture = Canvas(self.frameFutureExams, height=198)
+        self.canvasFuture = Canvas(self.frameFutureExams, height=198, bg="#313131")
         self.canvasFuture.pack(side=TOP, fill=X, expand=YES)
 
         self.xscrollbarFuture = ttk.Scrollbar(self.frameFutureExams, orient=HORIZONTAL, command=self.canvasFuture.xview)
         self.xscrollbarFuture.pack(side=TOP, fill=X)
 
         self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
-        self.canvasFuture.bind('<Configure>',
-                               lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+        # self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
-        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
+        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=1050, bg="#313131", relief=SUNKEN)
 
-        self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
+        self.secFrameFuture.bind("<Configure>", self.onFrameConfigureFuture)
+        self.canvasFuture.bind("<Configure>", self.onCanvasConfigureFuture)
+
+        self.windowFuture = self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
 
         examPList = Label(frameCenter, height=2, bg="#525252", text="Past Exams", fg="#FFFFFF")
         examPList.pack(side=TOP, fill=X)
@@ -2777,19 +2808,107 @@ class TeacherCoursePage(tk.Frame):
         self.framePastExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.framePastExams.pack(side=TOP, fill=X)
 
-        self.canvasPast = Canvas(self.framePastExams, height=198)
+        self.canvasPast = Canvas(self.framePastExams, height=198, bg="#313131")
         self.canvasPast.pack(side=TOP, fill=X, expand=YES)
 
         self.xscrollbarPast = ttk.Scrollbar(self.framePastExams, orient=HORIZONTAL, command=self.canvasPast.xview)
         self.xscrollbarPast.pack(side=TOP, fill=X)
 
         self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
-        self.canvasPast.bind('<Configure>',
-                             lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+        # self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
 
-        self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
+        self.secFramePast = Frame(self.canvasPast, height=300, width=1050, bg="#313131", relief=SUNKEN)
 
-        self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
+        self.secFramePast.bind("<Configure>", self.onFrameConfigurePast)
+        self.canvasPast.bind("<Configure>", self.onCanvasConfigurePast)
+
+        self.windowPast = self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
+
+    def onFrameConfigurePast(self, event):
+        self.canvasPast.configure(scrollregion=self.canvasPast.bbox("all"))
+
+    def onFrameConfigureFuture(self, event):
+        self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox("all"))
+
+    def onCanvasConfigurePast(self, event):
+        minWidth = self.secFramePast.winfo_reqwidth()
+        minHeight = self.secFramePast.winfo_reqheight()
+
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+        else:
+            newWidth = minWidth
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+        else:
+            newHeight = minHeight
+
+        courseAll = self.getExamDetailsOfCourse(self.controller.shared_data["selectedCourse"])
+
+        pastCourse = 0
+
+        for exam in courseAll:
+            splitArrDur = str(exam[3]).split(sep=":")
+            lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+            tempDelta = timedelta(minutes=lenInMin)
+
+            splitArrDate = str(exam[5]).split(sep="/")
+            splitArrTime = str(exam[6]).split(sep=":")
+            startTimeE = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                                  int(splitArrTime[0]), int(splitArrTime[1]))
+            startTimeE = startTimeE.replace(tzinfo=tz_IN)
+
+            endTime = startTimeE + tempDelta
+
+            if endTime < datetime_Now:
+                pastCourse += 1
+
+        self.canvasFuture.itemconfig(self.windowPast, width=pastCourse * 250, height=newHeight)
+
+    def onCanvasConfigureFuture(self, event):
+        minWidth = self.secFrameFuture.winfo_reqwidth()
+        minHeight = self.secFrameFuture.winfo_reqheight()
+
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+        else:
+            newWidth = minWidth
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+        else:
+            newHeight = minHeight
+
+        courseAll = self.getExamDetailsOfCourse(self.controller.shared_data["selectedCourse"])
+
+        futureCourse = 0
+
+        for exam in courseAll:
+            splitArrDur = str(exam[3]).split(sep=":")
+            lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+            tempDelta = timedelta(minutes=lenInMin)
+
+            splitArrDate = str(exam[5]).split(sep="/")
+            splitArrTime = str(exam[6]).split(sep=":")
+            startTimeE = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                                  int(splitArrTime[0]), int(splitArrTime[1]))
+            startTimeE = startTimeE.replace(tzinfo=tz_IN)
+
+            endTime = startTimeE + tempDelta
+
+            if endTime > datetime_Now:
+                futureCourse += 1
+
+        self.canvasFuture.itemconfig(self.windowFuture, width=futureCourse * 250, height=newHeight)
 
     def exams(self):
         tz_IN = pytz.timezone('Etc/GMT-3')
@@ -2889,9 +3008,9 @@ class TeacherCoursePage(tk.Frame):
 
         if futureExamsCount == 0:
             self.frameHeader.configure(height=110)
-            examNoFuture = Label(self.secFrameFuture, height=5, width=50, bg="#414141",
-                                 text="There are no upcoming exams", fg="#FFFFFF", font=f)
-            examNoFuture.pack(fill=X, expand=True)
+            self.examNoFuture = Label(self.secFrameFuture, height=5, width=50, bg="#414141",
+                                      text="There are no upcoming exams", fg="#FFFFFF", font=f)
+            self.examNoFuture.pack(fill=X, expand=True)
 
             self.xscrollbarFuture.pack_forget()
 
@@ -2902,6 +3021,9 @@ class TeacherCoursePage(tk.Frame):
             self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
             self.canvasFuture.bind('<Configure>',
                                    lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+
+        self.onCanvasConfigurePast("")
+        self.onCanvasConfigureFuture("")
 
     def openExamDetail(self, examID):
         self.controller.shared_data["selectedExam"] = examID
@@ -3870,19 +3992,21 @@ class CoursePageS(tk.Frame):
         self.frameFutureExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.frameFutureExams.pack(side=TOP, fill=X)
 
-        self.canvasFuture = Canvas(self.frameFutureExams, height=198)
+        self.canvasFuture = Canvas(self.frameFutureExams, height=198, bg="#313131")
         self.canvasFuture.pack(side=TOP, fill=X, expand=YES)
 
         self.xscrollbarFuture = ttk.Scrollbar(self.frameFutureExams, orient=HORIZONTAL, command=self.canvasFuture.xview)
         self.xscrollbarFuture.pack(side=TOP, fill=X)
 
         self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
-        self.canvasFuture.bind('<Configure>',
-                               lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+        # self.canvasFuture.bind('<Configure>', lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
 
-        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=4000, bg="#313131", relief=SUNKEN)
+        self.secFrameFuture = Frame(self.canvasFuture, height=300, width=1050, bg="#313131", relief=SUNKEN)
 
-        self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
+        self.secFrameFuture.bind("<Configure>", self.onFrameConfigureFuture)
+        self.canvasFuture.bind("<Configure>", self.onCanvasConfigureFuture)
+
+        self.windowFuture = self.canvasFuture.create_window((0, 0), window=self.secFrameFuture, anchor="nw")
 
         examPList = Label(frameCenter, height=2, bg="#525252", text="Past Exams", fg="#FFFFFF")
         examPList.pack(side=TOP, fill=X)
@@ -3890,19 +4014,107 @@ class CoursePageS(tk.Frame):
         self.framePastExams = Frame(frameCenter, height=250, bg="#313131", relief=SUNKEN)
         self.framePastExams.pack(side=TOP, fill=X)
 
-        self.canvasPast = Canvas(self.framePastExams, height=198)
+        self.canvasPast = Canvas(self.framePastExams, height=198, bg="#313131")
         self.canvasPast.pack(side=TOP, fill=X, expand=YES)
 
         self.xscrollbarPast = ttk.Scrollbar(self.framePastExams, orient=HORIZONTAL, command=self.canvasPast.xview)
         self.xscrollbarPast.pack(side=TOP, fill=X)
 
         self.canvasPast.configure(xscrollcommand=self.xscrollbarPast.set)
-        self.canvasPast.bind('<Configure>',
-                             lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
+        # self.canvasPast.bind('<Configure>', lambda e: self.canvasPast.configure(scrollregion=self.canvasPast.bbox('all')))
 
-        self.secFramePast = Frame(self.canvasPast, height=300, width=4000, bg="#313131", relief=SUNKEN)
+        self.secFramePast = Frame(self.canvasPast, height=300, width=1050, bg="#313131", relief=SUNKEN)
 
-        self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
+        self.secFramePast.bind("<Configure>", self.onFrameConfigurePast)
+        self.canvasPast.bind("<Configure>", self.onCanvasConfigurePast)
+
+        self.windowPast = self.canvasPast.create_window((0, 0), window=self.secFramePast, anchor="nw")
+
+    def onFrameConfigurePast(self, event):
+        self.canvasPast.configure(scrollregion=self.canvasPast.bbox("all"))
+
+    def onFrameConfigureFuture(self, event):
+        self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox("all"))
+
+    def onCanvasConfigurePast(self, event):
+        minWidth = self.secFramePast.winfo_reqwidth()
+        minHeight = self.secFramePast.winfo_reqheight()
+
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+        else:
+            newWidth = minWidth
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+        else:
+            newHeight = minHeight
+
+        courseAll = self.getExamDetailsOfCourse(self.controller.shared_data["selectedCourse"])
+
+        pastCourse = 0
+
+        for exam in courseAll:
+            splitArrDur = str(exam[3]).split(sep=":")
+            lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+            tempDelta = timedelta(minutes=lenInMin)
+
+            splitArrDate = str(exam[5]).split(sep="/")
+            splitArrTime = str(exam[6]).split(sep=":")
+            startTimeE = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                                  int(splitArrTime[0]), int(splitArrTime[1]))
+            startTimeE = startTimeE.replace(tzinfo=tz_IN)
+
+            endTime = startTimeE + tempDelta
+
+            if endTime < datetime_Now:
+                pastCourse += 1
+
+        self.canvasFuture.itemconfig(self.windowPast, width=pastCourse * 250, height=newHeight)
+
+    def onCanvasConfigureFuture(self, event):
+        minWidth = self.secFrameFuture.winfo_reqwidth()
+        minHeight = self.secFrameFuture.winfo_reqheight()
+
+        tz_IN = pytz.timezone('Etc/GMT-3')
+        datetime_Now = datetime.now(tz_IN)
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+        else:
+            newWidth = minWidth
+
+        if self.winfo_height() >= minHeight:
+            newHeight = self.winfo_height()
+        else:
+            newHeight = minHeight
+
+        courseAll = self.getExamDetailsOfCourse(self.controller.shared_data["selectedCourse"])
+
+        futureCourse = 0
+
+        for exam in courseAll:
+            splitArrDur = str(exam[3]).split(sep=":")
+            lenInMin = int(splitArrDur[0]) * 60 + int(splitArrDur[1])
+
+            tempDelta = timedelta(minutes=lenInMin)
+
+            splitArrDate = str(exam[5]).split(sep="/")
+            splitArrTime = str(exam[6]).split(sep=":")
+            startTimeE = datetime(int("20" + splitArrDate[2]), int(splitArrDate[1]), int(splitArrDate[0]),
+                                  int(splitArrTime[0]), int(splitArrTime[1]))
+            startTimeE = startTimeE.replace(tzinfo=tz_IN)
+
+            endTime = startTimeE + tempDelta
+
+            if endTime > datetime_Now:
+                futureCourse += 1
+
+        self.canvasFuture.itemconfig(self.windowFuture, width=futureCourse * 250, height=newHeight)
 
     def getIDfromMail(self, mail):
         result = db.child("students").order_by_child("email").equal_to(mail).get()
@@ -4025,6 +4237,9 @@ class CoursePageS(tk.Frame):
             self.canvasFuture.configure(xscrollcommand=self.xscrollbarFuture.set)
             self.canvasFuture.bind('<Configure>',
                                    lambda e: self.canvasFuture.configure(scrollregion=self.canvasFuture.bbox('all')))
+
+        self.onCanvasConfigurePast("")
+        self.onCanvasConfigureFuture("")
 
     def getExamDetailsOfCourse(self, courseID):
         examResult = db.child("exams").order_by_child("CourseID").equal_to(str(courseID)).get()
