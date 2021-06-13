@@ -767,6 +767,7 @@ class TeacherMainPage(tk.Frame):
 
     def createExam(self):
         self.controller.get_frame(CreateExam).examIDCon()
+        self.controller.get_frame(CreateExam).updateTime()
         self.controller.show_frame(CreateExam)
 
     def courses(self):
@@ -1592,14 +1593,18 @@ class CreateExam(tk.Frame):
         ateL = Label(self, text="Select Attempt Number:", width=20, height=2, bg="#313131", fg="#FFFFFF")
         ateL.place(x=100, y=420)
 
-        self.attemptNum = Spinbox(self, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER)
+        self.attempts = StringVar()
+
+        self.attemptNum = Spinbox(self, from_=1, to=10, wrap=True, width=2, state="readonly", font=f, justify=CENTER, textvariable=self.attempts)
         self.attemptNum.place(x=330, y=420)
 
         dateL = Label(self, text="Select Exam Date:", width=20, height=2, bg="#313131", fg="#FFFFFF")
         dateL.place(x=520, y=150)
 
+        self.currentDate = StringVar()
+
         self.startDate = Calendar(self, selectmode='day', year=today.year, month=today.month, day=today.day,
-                                  date_pattern='dd/mm/yy')
+                                  date_pattern='dd/mm/yy', textvariable=self.currentDate)
         self.startDate.place(x=700, y=150)
 
         timeL = Label(self, text="Select Exam Time:", width=20, height=2, bg="#313131", fg="#FFFFFF")
@@ -1625,6 +1630,16 @@ class CreateExam(tk.Frame):
 
         buttonSubmit = Button(self, text="Create", width=13, bg="#ca3e47", fg="#FFFFFF", command=self.create_Exam)
         buttonSubmit.place(x=650, y=500)
+
+    def updateTime(self):
+        now = datetime.now()
+        today = date.today()
+        self.hour_string.set(int(now.hour))
+        self.min_string.set(int(now.minute))
+        self.hour_d_string.set(0)
+        self.min_d_string.set(0)
+        self.attempts.set(1)
+        self.currentDate.set(today.strftime('%dd-%mm-%YY'))
 
     def getCourses(self):
         result = db.child("courses").order_by_child("TeacherMail").equal_to(
