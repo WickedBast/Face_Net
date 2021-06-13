@@ -161,14 +161,17 @@ class Login(tk.Frame):
         photoTeacher = Image.open("images/teacher-at-the-blackboard.png")
         photoStudent = Image.open("images/reading-book.png")
         photoSignIn = Image.open("images/sign-in.png")
+        photoForPass = Image.open("images/lock.png")
 
         photoTeacher = photoTeacher.resize((20, 20), Image.ANTIALIAS)
         photoStudent = photoStudent.resize((20, 20), Image.ANTIALIAS)
         photoSignIn = photoSignIn.resize((20, 20), Image.ANTIALIAS)
+        photoForPass = photoForPass.resize((20, 20), Image.ANTIALIAS)
 
         RphotoTeacher = ImageTk.PhotoImage(photoTeacher)
         RphotoStudent = ImageTk.PhotoImage(photoStudent)
         RphotoSignIn = ImageTk.PhotoImage(photoSignIn)
+        RphotoForPass = ImageTk.PhotoImage(photoForPass)
 
         # welcome = Label(self, text=" SIGN IN ", height=2, bg="#414141", fg="#FFFFFF", font=('Times', 20))
         # welcome.pack(side=TOP, fill=X)
@@ -190,15 +193,16 @@ class Login(tk.Frame):
 
         refresh()
 
-        forgotPassword = Button(self, text="Forgot your password?", cursor="hand2",
+        forgotPassword = Button(self, text="  Forgot your password?  ", cursor="hand2",
                                 command=lambda: controller.show_frame(ForgotPassword), bg="#ca3e47", fg="#FFFFFF",
-                                width=20)
-        forgotPassword.place(x=450, y=470)
+                                font='Arial 10 bold', image=RphotoForPass, compound=LEFT)
+        forgotPassword.image = RphotoForPass
+        forgotPassword.place(x=445, y=470)
 
         myButton = Button(self, text="  Sign In!  ", command=login, fg="#000000", bg="#9fe6a0",
                           image=RphotoSignIn, compound=LEFT, font='Arial 10 bold')
         myButton.image = RphotoSignIn
-        myButton.place(x=485, y=370)
+        myButton.place(x=490, y=370)
 
         buttonStudent = Button(self, text="  Student Sign Up  ", command=backS, bg="#325288", fg="#FFFFFF",
                                image=RphotoStudent, compound=LEFT, font='Arial 10 bold')
@@ -960,7 +964,7 @@ class StudentMainPage(tk.Frame):
         self.frameCourses = Frame(frameCE, height=250, width=1350, bg="#313131", relief=SUNKEN)
         self.frameCourses.pack(side=TOP, fill=X)
 
-        self.canvas = Canvas(self.frameCourses, height=410)
+        self.canvas = Canvas(self.frameCourses, height=410, bg="#313131")
         self.canvas.pack(side=TOP, fill=BOTH, expand=1)
 
         self.xscrollbar = ttk.Scrollbar(self.frameCourses, orient=HORIZONTAL, command=self.canvas.xview)
