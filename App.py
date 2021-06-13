@@ -891,6 +891,22 @@ class StudentMainPage(tk.Frame):
         photoSignOut = photoSignOut.resize((20, 20), Image.ANTIALIAS)
         RphotoSignOut = ImageTk.PhotoImage(photoSignOut)
 
+        photoTestF = Image.open("images/user-images.png")
+        photoTestF = photoTestF.resize((20, 20), Image.ANTIALIAS)
+        RphotoTestF = ImageTk.PhotoImage(photoTestF)
+
+        photoTestE = Image.open("images/eyes.png")
+        photoTestE = photoTestE.resize((20, 20), Image.ANTIALIAS)
+        RphotoTestE = ImageTk.PhotoImage(photoTestE)
+
+        photoChangeI = Image.open("images/change.png")
+        photoChangeI = photoChangeI.resize((20, 20), Image.ANTIALIAS)
+        RphotoChangeI = ImageTk.PhotoImage(photoChangeI)
+
+        photoChangeP = Image.open("images/padlock.png")
+        photoChangeP = photoChangeP.resize((20, 20), Image.ANTIALIAS)
+        RphotoChangeP = ImageTk.PhotoImage(photoChangeP)
+
         logoutButton = Button(frameHeader, text="  Logout  ", command=lambda: controller.show_frame(Login),
                               bg="#ca3e47", fg="#FFFFFF", image=RphotoSignOut, compound=LEFT, font='Arial 10 bold')
         logoutButton.image = RphotoSignOut
@@ -910,20 +926,23 @@ class StudentMainPage(tk.Frame):
         frameButtons = Frame(frameCenter, height=880, width=900, bg="#414141", borderwidth=2, relief=SUNKEN)
         frameButtons.pack(side=LEFT, fill=Y)
 
-        buttonTF = Button(frameButtons, text="Test FaceRec", command=self.test,
-                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonTF = Button(frameButtons, text="    Test FaceRec   ", command=self.test, bg="#ca3e47", fg="#FFFFFF",image=RphotoTestF, compound=LEFT)
+        buttonTF.image = RphotoTestF
         buttonTF.grid(row=1, column=1, columnspan=3, padx=10, pady=50)
 
-        buttonTE = Button(frameButtons, text="Test EyeGaze", command=self.capture,
-                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonTE = Button(frameButtons, text="    Test EyeGaze   ", command=self.capture,
+                           bg="#ca3e47", fg="#FFFFFF",image=RphotoTestE, compound=LEFT)
+        buttonTE.image = RphotoTestE
         buttonTE.grid(row=3, column=1, columnspan=3, padx=10, pady=50)
 
-        buttonCP = Button(frameButtons, text="Change Picture", command=self.change,
-                          width=13, bg="#ca3e47", fg="#FFFFFF")
+        buttonCP = Button(frameButtons, text="  Change Picture  ", command=self.change,
+                           bg="#ca3e47", fg="#FFFFFF",image=RphotoChangeI, compound=LEFT)
+        buttonCP.image=RphotoChangeI
         buttonCP.grid(row=5, column=1, columnspan=3, padx=10, pady=50)
 
-        buttonCC = Button(frameButtons, text="Change Password", command=self.changePass,
-                          width=15, bg="#ca3e47", fg="#FFFFFF")
+        buttonCC = Button(frameButtons, text= " Change Password ", command=self.changePass,
+                           bg="#ca3e47", fg="#FFFFFF",image=RphotoChangeP, compound=LEFT)
+        buttonCC.image = RphotoChangeP
         buttonCC.grid(row=7, column=1, columnspan=3, padx=10, pady=50)
 
         # buttonRefresh = Button(frameButtons, text="Refresh", command=self.courses, width=13, bg="#ca3e47",
